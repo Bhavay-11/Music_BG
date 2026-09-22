@@ -1,0 +1,46 @@
+package com.duetify.app.domain.repository
+
+import com.duetify.app.domain.model.Album
+import com.duetify.app.domain.model.Artist
+import com.duetify.app.domain.model.BrowseTile
+import com.duetify.app.domain.model.HomeFeed
+import com.duetify.app.domain.model.PlayableStream
+import com.duetify.app.domain.model.Playlist
+import com.duetify.app.domain.model.SearchResults
+import com.duetify.app.domain.model.Song
+
+/**
+ * Catalog + browse + stream resolution. Wraps a [com.duetify.app.domain.source.MusicSource],
+ * moving work to the IO dispatcher and caching resolved streams briefly (URLs expire).
+ */
+interface MusicRepository {
+    suspend fun homeFeed(): HomeFeed
+    suspend fun search(query: String): SearchResults
+    suspend fun album(id: String): Album
+    suspend fun artist(id: String): Artist
+    suspend fun playlist(id: String): Playlist
+    suspend fun relatedTo(songId: String): List<Song>
+
+    /** Metadata for a single track id (deep links, inbound shares). */
+    suspend fun song(songId: String): Song
+
+    /** Real, freshly-updated trending music. */
+    suspend fun trending(): List<Song>
+
+    /**
+     * Personalized picks: aggregates tracks related to [seeds] (e.g. the user's liked songs),
+     * excluding the seeds themselves. Returns up to [limit] deduped songs.
+     */
+    suspend fun recommendations(seeds: List<Song>, limit: Int): List<Song>
+
+    suspend fun resolveStream(songId: String): PlayableStream
+
+    /**
+     * Drops any cached stream URL for [songId] so the next [resolveStream] fetches a fresh one.
+     * Used to recover from a URL that expired or was rejected mid-playback before its cached TTL.
+     */
+    fun invalidateStream(songId: String)
+
+    /** Static curated genre/mood tiles for the Search landing screen. */
+    fun browseTiles(): List<BrowseTile>
+}
