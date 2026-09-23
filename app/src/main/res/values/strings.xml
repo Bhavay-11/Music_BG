@@ -24,6 +24,7 @@
     <string name="nav_listen">Listen</string>
     <string name="nav_library">Library</string>
     <string name="nav_search">Search</string>
+    <string name="nav_play">Play</string>
 
     <!-- Home -->
     <string name="home_title">Made For You</string>

@@ -9,6 +9,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.duetify.app.games.model.GameId
+import com.duetify.app.games.ui.GamesHubScreen
+import com.duetify.app.games.ui.thisorthat.ThisOrThatScreen
 import com.duetify.app.ui.album.AlbumDetailScreen
 import com.duetify.app.ui.artist.ArtistDetailScreen
 import com.duetify.app.ui.home.HomeScreen
@@ -61,6 +64,25 @@ fun DuetifyNavHost(
                 onOpenAlbum = { navController.navigate(Routes.album(it)) },
                 onOpenArtist = { navController.navigate(Routes.artist(it)) },
             )
+        }
+        composable(Routes.GAMES) {
+            GamesHubScreen(
+                onOpenGame = { game ->
+                    when (game) {
+                        GameId.THIS_OR_THAT -> navController.navigate(Routes.GAME_THIS_OR_THAT)
+                        else -> Unit // Locked games have no destination yet.
+                    }
+                },
+            )
+        }
+        composable(
+            route = Routes.GAME_THIS_OR_THAT,
+            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(dur)) },
+            exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(dur)) },
+            popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(dur)) },
+            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(dur)) },
+        ) {
+            ThisOrThatScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.LIBRARY) {
             LibraryScreen(
