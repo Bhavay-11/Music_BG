@@ -11,12 +11,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.duetify.app.games.model.GameId
 import com.duetify.app.games.ui.GamesHubScreen
+import com.duetify.app.games.ui.arcade.ConnectFourGame
 import com.duetify.app.games.ui.arcade.EmojiSongGame
+import com.duetify.app.games.ui.arcade.HigherLowerGame
 import com.duetify.app.games.ui.arcade.MemoryMatchGame
+import com.duetify.app.games.ui.arcade.MusicTriviaGame
 import com.duetify.app.games.ui.arcade.ReactionGame
 import com.duetify.app.games.ui.arcade.RockPaperScissorsGame
+import com.duetify.app.games.ui.arcade.SimonSaysGame
 import com.duetify.app.games.ui.arcade.TapFrenzyGame
 import com.duetify.app.games.ui.arcade.TicTacToeGame
+import com.duetify.app.games.ui.arcade.TruthOrDareGame
+import com.duetify.app.games.ui.arcade.TugOfWarGame
+import com.duetify.app.games.ui.arcade.WhackATapGame
+import com.duetify.app.games.ui.arcade.WouldYouRatherGame
 import com.duetify.app.games.ui.thisorthat.ThisOrThatScreen
 import com.duetify.app.ui.album.AlbumDetailScreen
 import com.duetify.app.ui.artist.ArtistDetailScreen
@@ -82,6 +90,14 @@ fun DuetifyNavHost(
                         GameId.TAP_FRENZY -> Routes.GAME_TAP_FRENZY
                         GameId.TIC_TAC_TOE -> Routes.GAME_TIC_TAC_TOE
                         GameId.ROCK_PAPER_SCISSORS -> Routes.GAME_RPS
+                        GameId.TRUTH_OR_DARE -> Routes.GAME_TRUTH_OR_DARE
+                        GameId.WOULD_YOU_RATHER -> Routes.GAME_WOULD_YOU_RATHER
+                        GameId.MUSIC_TRIVIA -> Routes.GAME_MUSIC_TRIVIA
+                        GameId.SIMON -> Routes.GAME_SIMON
+                        GameId.WHACK -> Routes.GAME_WHACK
+                        GameId.TUG_OF_WAR -> Routes.GAME_TUG_OF_WAR
+                        GameId.CONNECT_FOUR -> Routes.GAME_CONNECT_FOUR
+                        GameId.HIGHER_LOWER -> Routes.GAME_HIGHER_LOWER
                         else -> null // Locked games have no destination yet.
                     }
                     route?.let { navController.navigate(it) }
@@ -103,6 +119,14 @@ fun DuetifyNavHost(
         composable(Routes.GAME_TAP_FRENZY) { TapFrenzyGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_TIC_TAC_TOE) { TicTacToeGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_RPS) { RockPaperScissorsGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_TRUTH_OR_DARE) { TruthOrDareGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_WOULD_YOU_RATHER) { WouldYouRatherGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_MUSIC_TRIVIA) { MusicTriviaGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_SIMON) { SimonSaysGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_WHACK) { WhackATapGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_TUG_OF_WAR) { TugOfWarGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_CONNECT_FOUR) { ConnectFourGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_HIGHER_LOWER) { HigherLowerGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,
