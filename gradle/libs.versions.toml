@@ -28,6 +28,10 @@ haze = "1.6.10"
 zxing = "3.5.3"
 playServicesCodeScanner = "16.1.0"
 
+# Firebase (online duet-game sync)
+firebaseBom = "33.7.0"
+googleServices = "4.4.2"
+
 # Wear OS companion
 wearCompose = "1.6.2"
 playServicesWearable = "20.0.1"
@@ -91,6 +95,12 @@ play-services-code-scanner = { group = "com.google.android.gms", name = "play-se
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", version.ref = "haze" }
 
+# Firebase — realtime backend for online duet games. Versions come from the BOM.
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+
 # Wear OS companion
 androidx-wear-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "wearCompose" }
 androidx-wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearCompose" }
@@ -113,3 +123,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

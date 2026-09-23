@@ -117,6 +117,13 @@ dependencies {
     // Wear OS companion (Data Layer)
     implementation(libs.play.services.wearable)
 
+    // Firebase — realtime sync for online duet games. Safe to ship without google-services.json:
+    // the app still builds and runs (online games stay unavailable until Firebase is configured).
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // Java 8+ API desugaring (NewPipeExtractor uses java.nio.file; minSdk 24)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
@@ -127,4 +134,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Firebase is opt-in. The Google Services plugin fails the build when google-services.json is
+// absent, so it is only applied once the developer has dropped their own config into app/. Until
+// then the app builds and runs normally with online games disabled (Shields + local/bot games work).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

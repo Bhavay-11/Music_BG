@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Duetify duet-game rooms. Casual, ephemeral game data — any signed-in (anonymous) device may
+// read and write rooms. Tighten later (e.g. restrict writes to a room's own participants) if the
+// games start carrying anything sensitive.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{code} {
+      allow read, write: if request.auth != null;
+
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}

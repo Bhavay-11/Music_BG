@@ -81,12 +81,14 @@ fun ThisOrThatScreen(
             Box(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
                 when (val p = phase) {
                     is DuetPhase.Lobby -> LobbyView(
+                        onlineAvailable = viewModel.onlineAvailable,
                         onBot = viewModel::playWithBot,
                         onCreate = viewModel::createRoom,
                         onJoin = viewModel::joinRoom,
                     )
                     is DuetPhase.Connecting -> CenterStatus(p.message, spinner = true)
-                    is DuetPhase.WaitingForPartner -> WaitingView(code = p.code, onCancel = viewModel::leave)
+                    is DuetPhase.WaitingForPartner ->
+                        WaitingView(code = p.code, online = p.online, onCancel = viewModel::leave)
                     is DuetPhase.Playing -> PlayingView(
                         game = p.game,
                         partnerName = p.partnerName,
@@ -130,6 +132,7 @@ private fun Header(title: String, onBack: () -> Unit) {
 
 @Composable
 private fun LobbyView(
+    onlineAvailable: Boolean,
     onBot: () -> Unit,
     onCreate: () -> Unit,
     onJoin: (String) -> Unit,
@@ -156,7 +159,11 @@ private fun LobbyView(
         PrimaryAction(
             icon = { Icon(Icons.Filled.Favorite, null, tint = OnAccent) },
             label = "Create a room",
-            subtitle = "Get a code to share with your partner",
+            subtitle = if (onlineAvailable) {
+                "Get a code — play live with your partner anywhere"
+            } else {
+                "Get a code to share (same device for now)"
+            },
             onClick = onCreate,
         )
         Spacer(Modifier.height(20.dp))
@@ -187,7 +194,11 @@ private fun LobbyView(
 
         Spacer(Modifier.height(28.dp))
         Text(
-            text = "Playing on two phones far apart? Live rooms across devices arrive in the next update — for now, a room connects players on this device, and the bot is always ready.",
+            text = if (onlineAvailable) {
+                "Live rooms are on: create a room, send the code, and play together from anywhere."
+            } else {
+                "Long-distance play needs Firebase — add google-services.json to app/ to switch rooms to live cross-device sync. Until then, rooms connect on this device and the bot is always ready."
+            },
             style = MaterialTheme.typography.bodySmall,
             color = OnSurfaceVariantPink,
         )
@@ -223,7 +234,7 @@ private fun PrimaryAction(
 }
 
 @Composable
-private fun WaitingView(code: String, onCancel: () -> Unit) {
+private fun WaitingView(code: String, online: Boolean, onCancel: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -241,7 +252,16 @@ private fun WaitingView(code: String, onCancel: () -> Unit) {
         Spacer(Modifier.height(16.dp))
         CircularProgressIndicator(color = Teal)
         Spacer(Modifier.height(12.dp))
-        Text("Waiting for your partner to join…", style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariantPink)
+        Text(
+            text = if (online) {
+                "Waiting for your partner to join from their phone…"
+            } else {
+                "Waiting for a partner to join on this device…"
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = OnSurfaceVariantPink,
+            textAlign = TextAlign.Center,
+        )
         Spacer(Modifier.height(28.dp))
         OutlinedButton(onClick = onCancel) { Text("Cancel") }
     }

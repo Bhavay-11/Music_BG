@@ -6,4 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
+    // Declared here so `app` can apply it conditionally (only when google-services.json is present).
+    alias(libs.plugins.google.services) apply false
 }

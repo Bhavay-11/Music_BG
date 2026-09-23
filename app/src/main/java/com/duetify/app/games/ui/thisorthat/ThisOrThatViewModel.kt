@@ -4,11 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duetify.app.games.engine.ThisOrThatEngine
 import com.duetify.app.games.engine.ThisOrThatState
-import com.duetify.app.games.transport.ConnectionMode
 import com.duetify.app.games.transport.GameEvent
-import com.duetify.app.games.transport.GameTransport
 import com.duetify.app.games.transport.Participant
 import com.duetify.app.games.transport.RoomSession
+import com.duetify.app.games.transport.TransportProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,7 +22,7 @@ import kotlin.random.Random
 sealed interface DuetPhase {
     data object Lobby : DuetPhase
     data class Connecting(val message: String) : DuetPhase
-    data class WaitingForPartner(val code: String) : DuetPhase
+    data class WaitingForPartner(val code: String, val online: Boolean) : DuetPhase
     data class Playing(
         val game: ThisOrThatState,
         val partnerName: String,
@@ -42,10 +41,13 @@ private const val SIDE_RIGHT = "R"
 
 @HiltViewModel
 class ThisOrThatViewModel @Inject constructor(
-    private val transport: GameTransport,
+    private val transports: TransportProvider,
 ) : ViewModel() {
 
     private val selfId = UUID.randomUUID().toString()
+
+    /** True when Firebase is configured, so rooms play live across two phones. */
+    val onlineAvailable: Boolean get() = transports.onlineAvailable()
 
     private val _phase = MutableStateFlow<DuetPhase>(DuetPhase.Lobby)
     val phase = _phase.asStateFlow()
@@ -54,6 +56,7 @@ class ThisOrThatViewModel @Inject constructor(
     private var session: RoomSession? = null
     private var botSession: RoomSession? = null
     private var botMode = false
+    private var online = false
     private var partnerName = "Partner"
     private var eventJob: Job? = null
     private var rosterJob: Job? = null
@@ -62,30 +65,34 @@ class ThisOrThatViewModel @Inject constructor(
     fun playWithBot() {
         reset()
         botMode = true
+        online = false
         partnerName = BOT_NAME
         viewModelScope.launch {
             _phase.value = DuetPhase.Connecting("Warming up…")
+            val transport = transports.transport(online = false)
             val host = transport.host(self(name = "You"))
             session = host
             botSession = transport.join(host.code, botParticipant())
             observe(host)
-            startPlaying(online = false)
+            startPlaying()
         }
     }
 
-    /** Open a room and wait for a partner to join with the shown code. */
+    /** Open a room and wait for a partner to join with the shown code. Online when Firebase is set up. */
     fun createRoom() {
         reset()
         botMode = false
+        online = transports.onlineAvailable()
         viewModelScope.launch {
             _phase.value = DuetPhase.Connecting("Opening a room…")
+            val transport = transports.transport(online)
             val host = runCatching { transport.host(self(name = "You")) }.getOrElse {
                 _phase.value = DuetPhase.Failed(it.message ?: "Couldn't open a room")
                 return@launch
             }
             session = host
             observe(host)
-            _phase.value = DuetPhase.WaitingForPartner(host.code)
+            _phase.value = DuetPhase.WaitingForPartner(host.code, online)
         }
     }
 
@@ -93,8 +100,10 @@ class ThisOrThatViewModel @Inject constructor(
     fun joinRoom(code: String) {
         reset()
         botMode = false
+        online = transports.onlineAvailable()
         viewModelScope.launch {
             _phase.value = DuetPhase.Connecting("Joining ${code.uppercase()}…")
+            val transport = transports.transport(online)
             val joined = runCatching { transport.join(code.trim(), self(name = "You")) }.getOrNull()
             if (joined == null) {
                 _phase.value = DuetPhase.Failed("No room with code ${code.uppercase()}")
@@ -102,7 +111,7 @@ class ThisOrThatViewModel @Inject constructor(
             }
             session = joined
             observe(joined)
-            startPlaying(online = joined.connectionMode == ConnectionMode.ONLINE)
+            startPlaying()
         }
     }
 
@@ -145,9 +154,7 @@ class ThisOrThatViewModel @Inject constructor(
                 if (partner != null) {
                     partnerName = partner.name
                     // A partner arriving while we're waiting starts the game.
-                    if (_phase.value is DuetPhase.WaitingForPartner) {
-                        startPlaying(online = active.connectionMode == ConnectionMode.ONLINE)
-                    }
+                    if (_phase.value is DuetPhase.WaitingForPartner) startPlaying()
                 }
             }
         }
@@ -169,7 +176,7 @@ class ThisOrThatViewModel @Inject constructor(
         }
     }
 
-    private fun startPlaying(online: Boolean) {
+    private fun startPlaying() {
         game = ThisOrThatEngine.newGame()
         _phase.value = DuetPhase.Playing(game, partnerName, online)
     }
@@ -178,7 +185,6 @@ class ThisOrThatViewModel @Inject constructor(
         _phase.value = if (game.finished) {
             DuetPhase.Finished(game, partnerName)
         } else {
-            val online = (_phase.value as? DuetPhase.Playing)?.online ?: false
             DuetPhase.Playing(game, partnerName, online)
         }
     }
@@ -204,6 +210,7 @@ class ThisOrThatViewModel @Inject constructor(
         session = null
         botSession = null
         botMode = false
+        online = false
         game = ThisOrThatEngine.newGame()
         viewModelScope.launch { toClose.forEach { runCatching { it.close() } } }
     }
