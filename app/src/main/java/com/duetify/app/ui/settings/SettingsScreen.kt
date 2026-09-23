@@ -110,6 +110,7 @@ fun SettingsScreen(
     val downloadCount by viewModel.downloadCount.collectAsStateWithLifecycle()
     val storageBytes by viewModel.storageBytes.collectAsStateWithLifecycle()
     val recentSearchCount by viewModel.recentSearchCount.collectAsStateWithLifecycle()
+    val trackersBlocked by viewModel.trackersBlocked.collectAsStateWithLifecycle()
     var confirmClearDownloads by remember { mutableStateOf(false) }
     var showSupport by remember { mutableStateOf(false) }
 
@@ -326,6 +327,18 @@ fun SettingsScreen(
             }
 
             item { SettingsSection(stringResource(R.string.settings_section_privacy)) }
+            item {
+                SettingsSwitch(
+                    title = stringResource(R.string.settings_shields_title),
+                    subtitle = if (ui.shieldsEnabled && trackersBlocked > 0) {
+                        stringResource(R.string.settings_shields_blocked, trackersBlocked)
+                    } else {
+                        stringResource(R.string.settings_shields_subtitle)
+                    },
+                    checked = ui.shieldsEnabled,
+                    onCheckedChange = viewModel::setShieldsEnabled,
+                )
+            }
             item {
                 SettingsRow(
                     title = stringResource(R.string.settings_clear_history_title),

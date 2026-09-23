@@ -176,6 +176,13 @@ class AppPreferences @Inject constructor(@ApplicationContext context: Context) {
     val wifiOnlyDownloadsNow: Boolean get() = prefs.getBoolean(KEY_WIFI_ONLY, false)
     fun setWifiOnlyDownloads(value: Boolean) = prefs.edit().putBoolean(KEY_WIFI_ONLY, value).apply()
 
+    // --- privacy / shields -------------------------------------------------
+
+    /** Brave-style ad & tracker blocking. On by default — Duetify is a no-ads experience. */
+    val shieldsEnabled: Flow<Boolean> get() = watch(KEY_SHIELDS) { shieldsEnabledNow }
+    val shieldsEnabledNow: Boolean get() = prefs.getBoolean(KEY_SHIELDS, true)
+    fun setShieldsEnabled(value: Boolean) = prefs.edit().putBoolean(KEY_SHIELDS, value).apply()
+
     // --- sort orders -------------------------------------------------------
 
     val playlistSort: Flow<SongSort> get() = watch(KEY_SORT_PLAYLIST) { SongSort.fromName(prefs.getString(KEY_SORT_PLAYLIST, null)) }
@@ -408,6 +415,7 @@ class AppPreferences @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_FX_VIRTUALIZER = "fx_virtualizer"
         private const val KEY_FX_LOUDNESS = "fx_loudness_mb"
         private const val KEY_WIFI_ONLY = "wifi_only_downloads"
+        private const val KEY_SHIELDS = "shields_block_ads"
         private const val KEY_SORT_PLAYLIST = "sort_playlist"
         private const val KEY_SORT_DOWNLOADS = "sort_downloads"
         private const val KEY_RECENT_SEARCHES = "recent_searches"
@@ -429,7 +437,7 @@ class AppPreferences @Inject constructor(@ApplicationContext context: Context) {
             KEY_RESTORE_QUEUE, KEY_SKIP_SILENCE, KEY_AUTOPLAY, KEY_SLEEP_FADE, KEY_SPEED,
             KEY_CROSSFADE, KEY_FX_ENABLED, KEY_FX_PRESET, KEY_FX_BANDS, KEY_FX_BASS,
             KEY_FX_VIRTUALIZER, KEY_FX_LOUDNESS, KEY_WIFI_ONLY, KEY_SORT_PLAYLIST,
-            KEY_SORT_DOWNLOADS, KEY_RECENT_SEARCHES,
+            KEY_SORT_DOWNLOADS, KEY_RECENT_SEARCHES, KEY_SHIELDS,
         )
     }
 }

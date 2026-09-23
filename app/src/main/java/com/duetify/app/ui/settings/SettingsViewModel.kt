@@ -35,6 +35,7 @@ data class SettingsUiState(
     val playbackSpeed: Float = 1f,
     val crossfadeMs: Int = 0,
     val appearance: AppearanceUiState = AppearanceUiState(),
+    val shieldsEnabled: Boolean = true,
 )
 
 /** The Appearance section's state, kept separate so the 5-flow `combine` limit stays workable. */
@@ -64,7 +65,11 @@ class SettingsViewModel @Inject constructor(
     private val preferences: AppPreferences,
     private val downloadRepository: DownloadRepository,
     private val backupRepository: BackupRepository,
+    shieldsStats: com.duetify.app.privacy.ShieldsStats,
 ) : ViewModel() {
+
+    /** Live count of ad/tracker requests Shields has blocked this session. */
+    val trackersBlocked: StateFlow<Long> = shieldsStats.blocked
 
     private val playbackToggles = combine(
         preferences.restoreQueue,
@@ -91,8 +96,14 @@ class SettingsViewModel @Inject constructor(
         preferences.playbackSpeed,
         preferences.crossfadeMs,
         appearance,
-    ) { toggles, speed, crossfade, look ->
-        toggles.copy(playbackSpeed = speed, crossfadeMs = crossfade, appearance = look)
+        preferences.shieldsEnabled,
+    ) { toggles, speed, crossfade, look, shields ->
+        toggles.copy(
+            playbackSpeed = speed,
+            crossfadeMs = crossfade,
+            appearance = look,
+            shieldsEnabled = shields,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     val downloadCount: StateFlow<Int> = downloadRepository.downloads()
@@ -155,6 +166,8 @@ class SettingsViewModel @Inject constructor(
             preferences.setThemeFromArtwork(false)
         }
     }
+
+    fun setShieldsEnabled(value: Boolean) = preferences.setShieldsEnabled(value)
 
     fun clearSearchHistory() = preferences.clearRecentSearches()
 

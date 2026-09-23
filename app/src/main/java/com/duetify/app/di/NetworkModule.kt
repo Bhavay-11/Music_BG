@@ -1,6 +1,7 @@
 package com.duetify.app.di
 
 import android.content.Context
+import com.duetify.app.privacy.ShieldsInterceptor
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import dagger.Module
@@ -29,11 +30,18 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient =
+    fun provideOkHttpClient(
+        @ApplicationContext context: Context,
+        shieldsInterceptor: ShieldsInterceptor,
+    ): OkHttpClient =
         OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .cache(Cache(File(context.cacheDir, "http"), HTTP_CACHE_BYTES))
             .retryOnConnectionFailure(true)
+            // Shields: drop ad/tracker requests before they hit the network. First in the chain so
+            // it also covers cached responses and every downstream collaborator (NewPipe, lyrics,
+            // Spotify, updates) that shares this client.
+            .addInterceptor(shieldsInterceptor)
             .build()
 }

@@ -184,6 +184,9 @@
     <string name="settings_remove_all_confirm_title">Remove all downloads?</string>
     <string name="settings_remove_all_confirm_body">Every downloaded track will be deleted from this device. Your library and playlists stay intact.</string>
     <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_shields_title">Block ads &amp; trackers</string>
+    <string name="settings_shields_subtitle">Shields — stop ad, tracker and analytics domains across the whole app</string>
+    <string name="settings_shields_blocked">Shields on · %1$d trackers blocked this session</string>
     <string name="settings_clear_history_title">Clear search history</string>
     <string name="settings_clear_history_empty">Nothing saved</string>
     <string name="settings_section_about">About</string>
