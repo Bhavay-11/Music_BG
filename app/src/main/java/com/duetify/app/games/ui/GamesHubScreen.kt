@@ -176,6 +176,13 @@ private fun accentFor(game: GameId) = when (game) {
     GameId.CONNECT_FOUR -> Coral
     GameId.ROCK_PAPER_SCISSORS -> Lavender
     GameId.HIGHER_LOWER -> CoralDark
+    GameId.GOMOKU -> Teal
+    GameId.NOTAKTO -> Coral
+    GameId.ORDER_CHAOS -> Lavender
+    GameId.HANGMAN -> CoralDark
+    GameId.MASTERMIND -> Teal
+    GameId.BULLS_COWS -> Coral
+    GameId.PIG -> Lavender
     GameId.TAP_DUET -> Teal
     GameId.DRAW_TOGETHER -> Lavender
 }

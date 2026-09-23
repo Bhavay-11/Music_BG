@@ -5,15 +5,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Abc
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.TouchApp
@@ -43,6 +49,13 @@ enum class GameId(
     CONNECT_FOUR("Connect Four", "Drop discs, line up four", Icons.Filled.Circle, true),
     ROCK_PAPER_SCISSORS("Rock Paper Scissors", "The age-old duel", Icons.Filled.Casino, true),
     HIGHER_LOWER("Higher or Lower", "Guess the secret number", Icons.Filled.TrendingUp, true),
+    GOMOKU("Gomoku", "Five in a row wins", Icons.Filled.Grain, true),
+    NOTAKTO("Notakto", "Misère tic-tac-toe — make a line, you lose", Icons.Filled.Close, true),
+    ORDER_CHAOS("Order and Chaos", "Order builds five, Chaos blocks", Icons.Filled.Shuffle, true),
+    HANGMAN("Hangman", "Guess the word before you run out", Icons.Filled.Abc, true),
+    MASTERMIND("Mastermind", "Crack the colour code", Icons.Filled.Palette, true),
+    BULLS_COWS("Bulls and Cows", "Crack the number code", Icons.Filled.Pin, true),
+    PIG("Pig", "Push-your-luck dice for two", Icons.Filled.Casino, true),
 
     // Roadmap — locked tiles, no destination yet.
     TAP_DUET("Tap Duet", "Tap the beat together and score your sync", Icons.Filled.GraphicEq, false),

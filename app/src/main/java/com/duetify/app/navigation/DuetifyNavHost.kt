@@ -11,11 +11,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.duetify.app.games.model.GameId
 import com.duetify.app.games.ui.GamesHubScreen
+import com.duetify.app.games.ui.arcade.BullsAndCowsGame
 import com.duetify.app.games.ui.arcade.ConnectFourGame
 import com.duetify.app.games.ui.arcade.EmojiSongGame
+import com.duetify.app.games.ui.arcade.GomokuGame
+import com.duetify.app.games.ui.arcade.HangmanGame
 import com.duetify.app.games.ui.arcade.HigherLowerGame
+import com.duetify.app.games.ui.arcade.MastermindGame
 import com.duetify.app.games.ui.arcade.MemoryMatchGame
 import com.duetify.app.games.ui.arcade.MusicTriviaGame
+import com.duetify.app.games.ui.arcade.NotaktoGame
+import com.duetify.app.games.ui.arcade.OrderAndChaosGame
+import com.duetify.app.games.ui.arcade.PigDiceGame
 import com.duetify.app.games.ui.arcade.ReactionGame
 import com.duetify.app.games.ui.arcade.RockPaperScissorsGame
 import com.duetify.app.games.ui.arcade.SimonSaysGame
@@ -98,6 +105,13 @@ fun DuetifyNavHost(
                         GameId.TUG_OF_WAR -> Routes.GAME_TUG_OF_WAR
                         GameId.CONNECT_FOUR -> Routes.GAME_CONNECT_FOUR
                         GameId.HIGHER_LOWER -> Routes.GAME_HIGHER_LOWER
+                        GameId.GOMOKU -> Routes.GAME_GOMOKU
+                        GameId.NOTAKTO -> Routes.GAME_NOTAKTO
+                        GameId.ORDER_CHAOS -> Routes.GAME_ORDER_CHAOS
+                        GameId.HANGMAN -> Routes.GAME_HANGMAN
+                        GameId.MASTERMIND -> Routes.GAME_MASTERMIND
+                        GameId.BULLS_COWS -> Routes.GAME_BULLS_COWS
+                        GameId.PIG -> Routes.GAME_PIG
                         else -> null // Locked games have no destination yet.
                     }
                     route?.let { navController.navigate(it) }
@@ -127,6 +141,13 @@ fun DuetifyNavHost(
         composable(Routes.GAME_TUG_OF_WAR) { TugOfWarGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_CONNECT_FOUR) { ConnectFourGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_HIGHER_LOWER) { HigherLowerGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_GOMOKU) { GomokuGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_NOTAKTO) { NotaktoGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_ORDER_CHAOS) { OrderAndChaosGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_HANGMAN) { HangmanGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_MASTERMIND) { MastermindGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_BULLS_COWS) { BullsAndCowsGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_PIG) { PigDiceGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,

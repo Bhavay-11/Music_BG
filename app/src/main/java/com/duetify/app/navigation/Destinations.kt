@@ -37,6 +37,13 @@ object Routes {
     const val GAME_TUG_OF_WAR = "games/tug_of_war"
     const val GAME_CONNECT_FOUR = "games/connect_four"
     const val GAME_HIGHER_LOWER = "games/higher_lower"
+    const val GAME_GOMOKU = "games/gomoku"
+    const val GAME_NOTAKTO = "games/notakto"
+    const val GAME_ORDER_CHAOS = "games/order_chaos"
+    const val GAME_HANGMAN = "games/hangman"
+    const val GAME_MASTERMIND = "games/mastermind"
+    const val GAME_BULLS_COWS = "games/bulls_cows"
+    const val GAME_PIG = "games/pig"
 
     const val PLAYER = "player"
     const val QUEUE = "queue"
