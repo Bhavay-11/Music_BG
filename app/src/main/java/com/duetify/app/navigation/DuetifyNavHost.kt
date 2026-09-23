@@ -11,6 +11,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.duetify.app.games.model.GameId
 import com.duetify.app.games.ui.GamesHubScreen
+import com.duetify.app.games.ui.arcade.EmojiSongGame
+import com.duetify.app.games.ui.arcade.MemoryMatchGame
+import com.duetify.app.games.ui.arcade.ReactionGame
+import com.duetify.app.games.ui.arcade.RockPaperScissorsGame
+import com.duetify.app.games.ui.arcade.TapFrenzyGame
+import com.duetify.app.games.ui.arcade.TicTacToeGame
 import com.duetify.app.games.ui.thisorthat.ThisOrThatScreen
 import com.duetify.app.ui.album.AlbumDetailScreen
 import com.duetify.app.ui.artist.ArtistDetailScreen
@@ -68,10 +74,17 @@ fun DuetifyNavHost(
         composable(Routes.GAMES) {
             GamesHubScreen(
                 onOpenGame = { game ->
-                    when (game) {
-                        GameId.THIS_OR_THAT -> navController.navigate(Routes.GAME_THIS_OR_THAT)
-                        else -> Unit // Locked games have no destination yet.
+                    val route = when (game) {
+                        GameId.THIS_OR_THAT -> Routes.GAME_THIS_OR_THAT
+                        GameId.EMOJI_SONG -> Routes.GAME_EMOJI_SONG
+                        GameId.MEMORY_MATCH -> Routes.GAME_MEMORY_MATCH
+                        GameId.REACTION -> Routes.GAME_REACTION
+                        GameId.TAP_FRENZY -> Routes.GAME_TAP_FRENZY
+                        GameId.TIC_TAC_TOE -> Routes.GAME_TIC_TAC_TOE
+                        GameId.ROCK_PAPER_SCISSORS -> Routes.GAME_RPS
+                        else -> null // Locked games have no destination yet.
                     }
+                    route?.let { navController.navigate(it) }
                 },
             )
         }
@@ -84,6 +97,12 @@ fun DuetifyNavHost(
         ) {
             ThisOrThatScreen(onBack = { navController.popBackStack() })
         }
+        composable(Routes.GAME_EMOJI_SONG) { EmojiSongGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_MEMORY_MATCH) { MemoryMatchGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_REACTION) { ReactionGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_TAP_FRENZY) { TapFrenzyGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_TIC_TAC_TOE) { TicTacToeGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_RPS) { RockPaperScissorsGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,

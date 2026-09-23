@@ -1,6 +1,6 @@
 # Duetify
 
-**v2.0.2** — A dark, glassmorphic music‑streaming app for Android. Real audio streamed from YouTube via NewPipeExtractor and played through AndroidX Media3, wrapped in a Jetpack Compose UI inspired by an aurora‑glass design language (coral accent, Plus Jakarta Sans). Also plays music stored on your device.
+**v2.0.2** — A dark, glassmorphic **music + games** app for Android, built for couples and friends to enjoy together. Real audio streamed from YouTube via NewPipeExtractor and played through AndroidX Media3, plus a **Play** hub of duet mini‑games (YouTube‑Playables style) — including a live long‑distance "This or That" that syncs across two phones. Wrapped in a Jetpack Compose aurora‑glass UI (coral accent, Plus Jakarta Sans). Ad‑free and tracker‑free by design, with a built‑in **Shields** network blocker.
 
 > **Not shippable to Google Play.** Duetify streams from YouTube and depends on GPLv3 `NewPipeExtractor`; it is a personal / educational project, not a distributable product.
 
@@ -29,6 +29,17 @@
 - **True overlapping crossfade**, **equalizer + audio effects** (bass boost, virtualizer, loudness, skip‑silence, speed), **sleep timer**, high‑bitrate audio.
 - Frame‑interpolated position so the seek bar and live synced lyrics stay smooth.
 - **Resilient streaming** — an expired or rejected stream URL is re‑resolved on the fly, and a track that still fails is skipped rather than stalling playback.
+
+**Play together — games**
+- A **Play** tab with a Playables‑style hub of quick games:
+  - **This or That** — a duet compatibility game. Play vs a bot, in a same‑device room, or **live across two phones** once Firebase is configured (see [`firebase/SETUP.md`](firebase/SETUP.md)).
+  - **Emoji Song Quiz**, **Memory Match**, **Reaction Duel**, **Tap Frenzy**, **Tic‑Tac‑Toe** (pass‑and‑play), **Rock Paper Scissors** — all playable offline.
+  - Roadmap tiles (locked): Tap Duet (rhythm), Truth or Dare, Doodle Duet.
+- Games are built on a game‑agnostic, event‑sourced `GameTransport`: an in‑process transport for local/bot play and a Firestore transport for real long‑distance sync — the same interface, so games don't change between the two.
+
+**Privacy — Shields (no ads, no trackers)**
+- Duetify ships with **zero** ad / analytics / tracking SDKs, and music streaming skips YouTube ads.
+- **Shields** (on by default) goes further: an OkHttp interceptor blocks known ad / tracker / analytics hosts across all app traffic, with a **Settings → Privacy** toggle and a live "trackers blocked" count.
 
 **Beyond the phone**
 - **Android Auto** (browse + play), **Wear OS** transport, a **home‑screen widget**, a **Quick Settings tile**, deep links / "Open with" & "Share to Duetify" for YouTube links, and voice "play … on Duetify".
@@ -79,7 +90,9 @@ data/          Impls — only layer importing NewPipe / Room / Spotify / prefs
 playback/      Media3 bridge (service, controller, resolver, crossfade, effects, sleep timer)
 download/      Foreground download service
 update/        In-app updater (checks GitHub Releases, installs the APK)
-di/            Hilt modules (data, database, network, media cache)
+games/         Duet + arcade games: transport (Local + Firebase), engine, hub, screens
+privacy/       Shields — ad/tracker blocklist + OkHttp interceptor
+di/            Hilt modules (data, database, network, media cache, games)
 widget/ tile/ wear/   Home‑screen widget · Quick Settings tile · Wear OS bridge
 ```
 
@@ -102,9 +115,19 @@ Requirements:
 ./gradlew :app:assembleDebug
 ```
 
+**Get an installable APK** (the file to copy to a phone):
+
+```bash
+./gradlew :app:assembleDebug
+# Output: app/build/outputs/apk/debug/app-debug.apk
+```
+
+Or in Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**, then click **locate** to reveal `app-debug.apk`. Copy it to the phone and open it (enable "Install unknown apps" for your file manager). This debug APK is the full app — no feature is gated, so it is effectively the "mod"/unlocked build.
+
 Notes:
 - `android.disallowKotlinSourceSets=false` is required (AGP 9 built‑in Kotlin + KSP).
 - NewPipeExtractor uses `java.nio.file`, so core‑library desugaring is enabled for `minSdk 24`.
+- **Online games are optional**: without `app/google-services.json` the app builds and runs with local/bot games; add Firebase to enable live cross‑device play. See [`firebase/SETUP.md`](firebase/SETUP.md).
 
 ## License / legal
 

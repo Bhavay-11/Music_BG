@@ -162,6 +162,12 @@ private fun GameTile(game: GameId, onClick: () -> Unit) {
 @Composable
 private fun accentFor(game: GameId) = when (game) {
     GameId.THIS_OR_THAT -> Coral
+    GameId.EMOJI_SONG -> Teal
+    GameId.MEMORY_MATCH -> Lavender
+    GameId.REACTION -> CoralDark
+    GameId.TAP_FRENZY -> Coral
+    GameId.TIC_TAC_TOE -> Teal
+    GameId.ROCK_PAPER_SCISSORS -> Lavender
     GameId.TAP_DUET -> Teal
     GameId.TRUTH_OR_DARE -> CoralDark
     GameId.DRAW_TOGETHER -> Lavender

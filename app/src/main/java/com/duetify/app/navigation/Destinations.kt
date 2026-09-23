@@ -21,8 +21,14 @@ object Routes {
     const val LIBRARY = "library"
     const val GAMES = "games"
 
-    /** Individual duet games, opened from the games hub. */
+    /** Individual games, opened from the games hub. */
     const val GAME_THIS_OR_THAT = "games/this_or_that"
+    const val GAME_EMOJI_SONG = "games/emoji_song"
+    const val GAME_MEMORY_MATCH = "games/memory_match"
+    const val GAME_REACTION = "games/reaction"
+    const val GAME_TAP_FRENZY = "games/tap_frenzy"
+    const val GAME_TIC_TAC_TOE = "games/tic_tac_toe"
+    const val GAME_RPS = "games/rock_paper_scissors"
 
     const val PLAYER = "player"
     const val QUEUE = "queue"
