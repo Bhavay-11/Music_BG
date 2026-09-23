@@ -44,6 +44,11 @@ object Routes {
     const val GAME_MASTERMIND = "games/mastermind"
     const val GAME_BULLS_COWS = "games/bulls_cows"
     const val GAME_PIG = "games/pig"
+    const val GAME_RPS_LS = "games/rps_lizard_spock"
+    const val GAME_WAR = "games/war"
+    const val GAME_REVERSI = "games/reversi"
+    const val GAME_BLACKJACK = "games/blackjack"
+    const val GAME_SNAKE = "games/snake"
 
     const val PLAYER = "player"
     const val QUEUE = "queue"

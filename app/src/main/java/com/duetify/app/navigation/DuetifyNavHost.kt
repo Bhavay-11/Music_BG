@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.duetify.app.games.model.GameId
 import com.duetify.app.games.ui.GamesHubScreen
+import com.duetify.app.games.ui.arcade.BlackjackGame
 import com.duetify.app.games.ui.arcade.BullsAndCowsGame
 import com.duetify.app.games.ui.arcade.ConnectFourGame
 import com.duetify.app.games.ui.arcade.EmojiSongGame
@@ -24,12 +25,16 @@ import com.duetify.app.games.ui.arcade.NotaktoGame
 import com.duetify.app.games.ui.arcade.OrderAndChaosGame
 import com.duetify.app.games.ui.arcade.PigDiceGame
 import com.duetify.app.games.ui.arcade.ReactionGame
+import com.duetify.app.games.ui.arcade.ReversiGame
 import com.duetify.app.games.ui.arcade.RockPaperScissorsGame
+import com.duetify.app.games.ui.arcade.RpsLizardSpockGame
 import com.duetify.app.games.ui.arcade.SimonSaysGame
+import com.duetify.app.games.ui.arcade.SnakeGame
 import com.duetify.app.games.ui.arcade.TapFrenzyGame
 import com.duetify.app.games.ui.arcade.TicTacToeGame
 import com.duetify.app.games.ui.arcade.TruthOrDareGame
 import com.duetify.app.games.ui.arcade.TugOfWarGame
+import com.duetify.app.games.ui.arcade.WarCardGame
 import com.duetify.app.games.ui.arcade.WhackATapGame
 import com.duetify.app.games.ui.arcade.WouldYouRatherGame
 import com.duetify.app.games.ui.thisorthat.ThisOrThatScreen
@@ -112,6 +117,11 @@ fun DuetifyNavHost(
                         GameId.MASTERMIND -> Routes.GAME_MASTERMIND
                         GameId.BULLS_COWS -> Routes.GAME_BULLS_COWS
                         GameId.PIG -> Routes.GAME_PIG
+                        GameId.RPS_LIZARD_SPOCK -> Routes.GAME_RPS_LS
+                        GameId.WAR -> Routes.GAME_WAR
+                        GameId.REVERSI -> Routes.GAME_REVERSI
+                        GameId.BLACKJACK -> Routes.GAME_BLACKJACK
+                        GameId.SNAKE -> Routes.GAME_SNAKE
                         else -> null // Locked games have no destination yet.
                     }
                     route?.let { navController.navigate(it) }
@@ -148,6 +158,11 @@ fun DuetifyNavHost(
         composable(Routes.GAME_MASTERMIND) { MastermindGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_BULLS_COWS) { BullsAndCowsGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_PIG) { PigDiceGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_RPS_LS) { RpsLizardSpockGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_WAR) { WarCardGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_REVERSI) { ReversiGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_BLACKJACK) { BlackjackGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_SNAKE) { SnakeGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,

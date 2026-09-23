@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.GridView
@@ -19,7 +21,9 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.TouchApp
@@ -56,6 +60,11 @@ enum class GameId(
     MASTERMIND("Mastermind", "Crack the colour code", Icons.Filled.Palette, true),
     BULLS_COWS("Bulls and Cows", "Crack the number code", Icons.Filled.Pin, true),
     PIG("Pig", "Push-your-luck dice for two", Icons.Filled.Casino, true),
+    RPS_LIZARD_SPOCK("RPS Lizard Spock", "Five weapons, one winner", Icons.Filled.Gesture, true),
+    WAR("War", "Highest card takes the pile", Icons.Filled.Style, true),
+    REVERSI("Reversi", "Flank and flip to own the board", Icons.Filled.RadioButtonChecked, true),
+    BLACKJACK("Blackjack", "Hit 21, beat the dealer", Icons.Filled.Casino, true),
+    SNAKE("Snake", "Eat, grow, don't crash", Icons.Filled.Gamepad, true),
 
     // Roadmap — locked tiles, no destination yet.
     TAP_DUET("Tap Duet", "Tap the beat together and score your sync", Icons.Filled.GraphicEq, false),
