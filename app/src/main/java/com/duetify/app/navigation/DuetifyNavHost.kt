@@ -14,10 +14,14 @@ import com.duetify.app.games.ui.GamesHubScreen
 import com.duetify.app.games.ui.arcade.BlackjackGame
 import com.duetify.app.games.ui.arcade.BullsAndCowsGame
 import com.duetify.app.games.ui.arcade.ConnectFourGame
+import com.duetify.app.games.ui.arcade.DotsAndBoxesGame
 import com.duetify.app.games.ui.arcade.EmojiSongGame
 import com.duetify.app.games.ui.arcade.GomokuGame
 import com.duetify.app.games.ui.arcade.HangmanGame
+import com.duetify.app.games.ui.arcade.HexGame
 import com.duetify.app.games.ui.arcade.HigherLowerGame
+import com.duetify.app.games.ui.arcade.KnucklebonesGame
+import com.duetify.app.games.ui.arcade.MancalaGame
 import com.duetify.app.games.ui.arcade.MastermindGame
 import com.duetify.app.games.ui.arcade.MemoryMatchGame
 import com.duetify.app.games.ui.arcade.MusicTriviaGame
@@ -33,6 +37,7 @@ import com.duetify.app.games.ui.arcade.SnakeGame
 import com.duetify.app.games.ui.arcade.TapFrenzyGame
 import com.duetify.app.games.ui.arcade.TicTacToeGame
 import com.duetify.app.games.ui.arcade.TruthOrDareGame
+import com.duetify.app.games.ui.arcade.UltimateTicTacToeGame
 import com.duetify.app.games.ui.arcade.TugOfWarGame
 import com.duetify.app.games.ui.arcade.WarCardGame
 import com.duetify.app.games.ui.arcade.WhackATapGame
@@ -122,6 +127,11 @@ fun DuetifyNavHost(
                         GameId.REVERSI -> Routes.GAME_REVERSI
                         GameId.BLACKJACK -> Routes.GAME_BLACKJACK
                         GameId.SNAKE -> Routes.GAME_SNAKE
+                        GameId.KNUCKLEBONES -> Routes.GAME_KNUCKLEBONES
+                        GameId.ULTIMATE_TTT -> Routes.GAME_ULTIMATE_TTT
+                        GameId.DOTS_BOXES -> Routes.GAME_DOTS_BOXES
+                        GameId.MANCALA -> Routes.GAME_MANCALA
+                        GameId.HEX -> Routes.GAME_HEX
                         else -> null // Locked games have no destination yet.
                     }
                     route?.let { navController.navigate(it) }
@@ -163,6 +173,11 @@ fun DuetifyNavHost(
         composable(Routes.GAME_REVERSI) { ReversiGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_BLACKJACK) { BlackjackGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_SNAKE) { SnakeGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_KNUCKLEBONES) { KnucklebonesGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_ULTIMATE_TTT) { UltimateTicTacToeGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_DOTS_BOXES) { DotsAndBoxesGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_MANCALA) { MancalaGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_HEX) { HexGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,

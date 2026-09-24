@@ -49,6 +49,11 @@ object Routes {
     const val GAME_REVERSI = "games/reversi"
     const val GAME_BLACKJACK = "games/blackjack"
     const val GAME_SNAKE = "games/snake"
+    const val GAME_KNUCKLEBONES = "games/knucklebones"
+    const val GAME_ULTIMATE_TTT = "games/ultimate_ttt"
+    const val GAME_DOTS_BOXES = "games/dots_boxes"
+    const val GAME_MANCALA = "games/mancala"
+    const val GAME_HEX = "games/hex"
 
     const val PLAYER = "player"
     const val QUEUE = "queue"

@@ -10,9 +10,13 @@ import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.BorderAll
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Gesture
+import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.Hexagon
+import androidx.compose.material.icons.filled.ViewColumn
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.GridView
@@ -65,6 +69,11 @@ enum class GameId(
     REVERSI("Reversi", "Flank and flip to own the board", Icons.Filled.RadioButtonChecked, true),
     BLACKJACK("Blackjack", "Hit 21, beat the dealer", Icons.Filled.Casino, true),
     SNAKE("Snake", "Eat, grow, don't crash", Icons.Filled.Gamepad, true),
+    KNUCKLEBONES("Knucklebones", "Dice duel — match to multiply", Icons.Filled.Casino, true),
+    ULTIMATE_TTT("Ultimate Tic-Tac-Toe", "Nine boards, one champion", Icons.Filled.GridOn, true),
+    DOTS_BOXES("Dots and Boxes", "Close boxes, claim the grid", Icons.Filled.BorderAll, true),
+    MANCALA("Mancala", "Sow seeds, fill your store", Icons.Filled.ViewColumn, true),
+    HEX("Hex", "Connect your two sides", Icons.Filled.Hexagon, true),
 
     // Roadmap — locked tiles, no destination yet.
     TAP_DUET("Tap Duet", "Tap the beat together and score your sync", Icons.Filled.GraphicEq, false),
