@@ -14,6 +14,7 @@ import com.duetify.app.games.ui.GamesHubScreen
 import com.duetify.app.games.ui.arcade.BlackjackGame
 import com.duetify.app.games.ui.arcade.BullsAndCowsGame
 import com.duetify.app.games.ui.arcade.ConnectFourGame
+import com.duetify.app.games.ui.arcade.CrazyEightsGame
 import com.duetify.app.games.ui.arcade.DotsAndBoxesGame
 import com.duetify.app.games.ui.arcade.EmojiSongGame
 import com.duetify.app.games.ui.arcade.Game2048
@@ -27,6 +28,7 @@ import com.duetify.app.games.ui.arcade.MastermindGame
 import com.duetify.app.games.ui.arcade.MemoryMatchGame
 import com.duetify.app.games.ui.arcade.MinesweeperGame
 import com.duetify.app.games.ui.arcade.MusicTriviaGame
+import com.duetify.app.games.ui.arcade.NimGame
 import com.duetify.app.games.ui.arcade.NotaktoGame
 import com.duetify.app.games.ui.arcade.OrderAndChaosGame
 import com.duetify.app.games.ui.arcade.PigDiceGame
@@ -36,8 +38,10 @@ import com.duetify.app.games.ui.arcade.RockPaperScissorsGame
 import com.duetify.app.games.ui.arcade.RpsLizardSpockGame
 import com.duetify.app.games.ui.arcade.SimonSaysGame
 import com.duetify.app.games.ui.arcade.SnakeGame
+import com.duetify.app.games.ui.arcade.SnapGame
 import com.duetify.app.games.ui.arcade.TapFrenzyGame
 import com.duetify.app.games.ui.arcade.TicTacToeGame
+import com.duetify.app.games.ui.arcade.TronGame
 import com.duetify.app.games.ui.arcade.TruthOrDareGame
 import com.duetify.app.games.ui.arcade.UltimateTicTacToeGame
 import com.duetify.app.games.ui.arcade.TugOfWarGame
@@ -140,6 +144,10 @@ fun DuetifyNavHost(
                         GameId.WORDLE -> Routes.GAME_WORDLE
                         GameId.MINESWEEPER -> Routes.GAME_MINESWEEPER
                         GameId.YAHTZEE -> Routes.GAME_YAHTZEE
+                        GameId.NIM -> Routes.GAME_NIM
+                        GameId.SNAP -> Routes.GAME_SNAP
+                        GameId.TRON -> Routes.GAME_TRON
+                        GameId.CRAZY_EIGHTS -> Routes.GAME_CRAZY_EIGHTS
                         else -> null // Locked games have no destination yet.
                     }
                     route?.let { navController.navigate(it) }
@@ -190,6 +198,10 @@ fun DuetifyNavHost(
         composable(Routes.GAME_WORDLE) { WordleGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_MINESWEEPER) { MinesweeperGame(onBack = { navController.popBackStack() }) }
         composable(Routes.GAME_YAHTZEE) { YahtzeeGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_NIM) { NimGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_SNAP) { SnapGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_TRON) { TronGame(onBack = { navController.popBackStack() }) }
+        composable(Routes.GAME_CRAZY_EIGHTS) { CrazyEightsGame(onBack = { navController.popBackStack() }) }
         composable(Routes.LIBRARY) {
             LibraryScreen(
                 playerViewModel = playerViewModel,

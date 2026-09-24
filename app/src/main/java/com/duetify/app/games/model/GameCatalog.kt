@@ -11,8 +11,12 @@ import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Filter8
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.BorderAll
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Gamepad
@@ -81,6 +85,10 @@ enum class GameId(
     WORDLE("Word Guess", "Six tries to find the word", Icons.Filled.TextFields, true),
     MINESWEEPER("Minesweeper", "Clear the field, dodge the mines", Icons.Filled.Flag, true),
     YAHTZEE("Yahtzee", "Roll for the best dice combos", Icons.Filled.Casino, true),
+    NIM("Nim", "Take sticks — don't take the last", Icons.Filled.Straighten, true),
+    SNAP("Snap", "First to spot a match wins", Icons.Filled.FlashOn, true),
+    TRON("Tron Light Cycles", "Trap your rival in your trail", Icons.Filled.Timeline, true),
+    CRAZY_EIGHTS("Crazy Eights", "Shed your hand, eights are wild", Icons.Filled.Filter8, true),
 
     // Roadmap — locked tiles, no destination yet.
     TAP_DUET("Tap Duet", "Tap the beat together and score your sync", Icons.Filled.GraphicEq, false),
