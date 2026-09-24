@@ -30,12 +30,17 @@
 - Frame‑interpolated position so the seek bar and live synced lyrics stay smooth.
 - **Resilient streaming** — an expired or rejected stream URL is re‑resolved on the fly, and a track that still fails is skipped rather than stalling playback.
 
-**Play together — games**
-- A **Play** tab with a Playables‑style hub of quick games:
-  - **This or That** — a duet compatibility game. Play vs a bot, in a same‑device room, or **live across two phones** once Firebase is configured (see [`firebase/SETUP.md`](firebase/SETUP.md)).
-  - **Emoji Song Quiz**, **Memory Match**, **Reaction Duel**, **Tap Frenzy**, **Tic‑Tac‑Toe** (pass‑and‑play), **Rock Paper Scissors** — all playable offline.
-  - Roadmap tiles (locked): Tap Duet (rhythm), Truth or Dare, Doodle Duet.
-- Games are built on a game‑agnostic, event‑sourced `GameTransport`: an in‑process transport for local/bot play and a Firestore transport for real long‑distance sync — the same interface, so games don't change between the two.
+**Play together — 40 games**
+- A **Play** tab with a Playables‑style hub of quick games, grouped by kind:
+  - **Duet / couples:** This or That (live 2‑phone via Firebase), Truth or Dare, Would You Rather, Tug of War, Snap.
+  - **Grid & strategy:** Tic‑Tac‑Toe, Connect Four, Gomoku, Notakto, Order & Chaos, Reversi, Ultimate Tic‑Tac‑Toe, Dots & Boxes, Mancala, Hex, Nim.
+  - **Word & number:** Emoji Song Quiz, Music Trivia, Hangman, Word Guess (Wordle‑style), Mastermind, Bulls & Cows, Higher or Lower.
+  - **Cards:** War, Blackjack, Crazy Eights.
+  - **Dice:** Pig, Knucklebones, Yahtzee.
+  - **Arcade / reflex:** Reaction Duel, Tap Frenzy, Whack‑a‑Tap, Simon Says, Snake, Tron Light Cycles, 2048, Minesweeper, Rock Paper Scissors (+ Lizard Spock).
+- **This or That** plays vs a bot, in a same‑device room, or **live across two phones** once Firebase is configured (see [`firebase/SETUP.md`](firebase/SETUP.md)). Everything else is fully offline.
+- Games are built on a game‑agnostic, event‑sourced `GameTransport` (in‑process transport for local/bot; Firestore transport for real long‑distance sync) plus a shared `GameScaffold`, so adding another game is one screen + one catalog entry + one nav route.
+- Roadmap tiles (locked): Tap Duet (rhythm), Doodle Duet.
 
 **Privacy — Shields (no ads, no trackers)**
 - Duetify ships with **zero** ad / analytics / tracking SDKs, and music streaming skips YouTube ads.
