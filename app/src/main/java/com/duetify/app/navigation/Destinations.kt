@@ -54,6 +54,10 @@ object Routes {
     const val GAME_DOTS_BOXES = "games/dots_boxes"
     const val GAME_MANCALA = "games/mancala"
     const val GAME_HEX = "games/hex"
+    const val GAME_2048 = "games/2048"
+    const val GAME_WORDLE = "games/wordle"
+    const val GAME_MINESWEEPER = "games/minesweeper"
+    const val GAME_YAHTZEE = "games/yahtzee"
 
     const val PLAYER = "player"
     const val QUEUE = "queue"

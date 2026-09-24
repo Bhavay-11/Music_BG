@@ -10,6 +10,9 @@ import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.BorderAll
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Gamepad
@@ -74,6 +77,10 @@ enum class GameId(
     DOTS_BOXES("Dots and Boxes", "Close boxes, claim the grid", Icons.Filled.BorderAll, true),
     MANCALA("Mancala", "Sow seeds, fill your store", Icons.Filled.ViewColumn, true),
     HEX("Hex", "Connect your two sides", Icons.Filled.Hexagon, true),
+    G2048("2048", "Swipe, merge, reach 2048", Icons.Filled.Dashboard, true),
+    WORDLE("Word Guess", "Six tries to find the word", Icons.Filled.TextFields, true),
+    MINESWEEPER("Minesweeper", "Clear the field, dodge the mines", Icons.Filled.Flag, true),
+    YAHTZEE("Yahtzee", "Roll for the best dice combos", Icons.Filled.Casino, true),
 
     // Roadmap — locked tiles, no destination yet.
     TAP_DUET("Tap Duet", "Tap the beat together and score your sync", Icons.Filled.GraphicEq, false),
