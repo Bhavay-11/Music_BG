@@ -122,7 +122,7 @@
     coins() { return Store.get("coins", 0); },
     addCoins(n) { Store.set("coins", Store.coins() + n); },
   };
-  const SCOREABLE = { flappy: "Flappy Tap", dashrun: "Dash Run", shooter: "Space Shooter", jumper: "Sky Hopper", bubble: "Bubble Pop", beat: "Beat Tap", g2048: "2048", snake: "Snake", whack: "Whack-a-Tap" };
+  const SCOREABLE = { flappy: "Flappy Tap", dashrun: "Dash Run", shooter: "Space Shooter", jumper: "Sky Hopper", bubble: "Bubble Pop", beat: "Beat Tap", g2048: "2048", snake: "Snake", whack: "Whack-a-Tap", stack: "Stack", meteor: "Meteor Dodge", aim: "Aim Trainer", simon: "Simon" };
   function dailyCheck() {
     const today = new Date().toISOString().slice(0, 10);
     const last = Store.get("lastDay", null);
@@ -787,6 +787,92 @@
       return ()=>clearTimeout(timer);
     }});
 
+  // ---- Stack (tower builder) ----
+  games.push({ id:"stack", name:"Stack", tag:"Drop blocks, build the tower", emoji:"🏗️", color:"#4c7df0", cat:"Arcade",
+    render(s){ const st=mk("div","status"); s.appendChild(st); const c=makeCanvas(s,320,480); if(!c.ctx)return; const {ctx,W,H,cv}=c; const bh=26;
+      let blocks,aw,ax,dir,speed,over,score,raf;
+      function reset(){ blocks=[{x:W/2-70,w:140}]; aw=140; ax=0; dir=1; speed=2.4; over=false; score=0; }
+      reset();
+      cv.addEventListener("pointerdown",()=>{ if(over){reset();return;} const prev=blocks[blocks.length-1]; const l=Math.max(ax,prev.x), r=Math.min(ax+aw,prev.x+prev.w), ov=r-l;
+        if(ov<=0){ over=true; FX.buzz(); Store.submitBest("stack",score); return; } blocks.push({x:l,w:ov}); aw=ov; score++; speed=Math.min(6,speed+0.08); ax=dir>0?0:W-aw; FX.pop(); });
+      function step(){ if(!over){ ax+=dir*speed; if(ax<0){ax=0;dir=1;} if(ax+aw>W){ax=W-aw;dir=-1;} }
+        const scroll=Math.max(0, blocks.length*bh-(H-170)); ctx.fillStyle="#0a0812";ctx.fillRect(0,0,W,H);
+        blocks.forEach((b,i)=>{ const y=H-40-i*bh+scroll; if(y<-bh||y>H)return; const hue=(i*24)%360; ctx.save();ctx.shadowBlur=8;ctx.shadowColor="hsl("+hue+",70%,60%)";ctx.fillStyle="hsl("+hue+",65%,55%)"; roundRect(ctx,b.x,y,b.w,bh-3,5);ctx.fill();ctx.restore(); });
+        if(!over){ const y=H-40-blocks.length*bh+scroll; ctx.save();ctx.shadowBlur=12;ctx.shadowColor="#fff";ctx.fillStyle="#f3eefb"; roundRect(ctx,ax,y,aw,bh-3,5);ctx.fill();ctx.restore(); }
+        ctx.fillStyle="#fff";ctx.font="bold 24px sans-serif";ctx.textAlign="center";ctx.fillText(score,W/2,44);
+        st.textContent= over?("Tower "+score+" · best "+Store.best("stack")+" · tap to retry"):"Tap to drop — line them up";
+        if(over){ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.fillText("Tower "+score,W/2,H/2);}
+        raf=requestAnimationFrame(step); }
+      step(); return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Meteor Dodge ----
+  games.push({ id:"meteor", name:"Meteor Dodge", tag:"Survive the falling rocks", emoji:"☄️", color:"#e5484d", cat:"Arcade",
+    render(s){ const st=mk("div","status"); s.appendChild(st); const c=makeCanvas(s,340,480); if(!c.ctx)return; const {ctx,W,H,cv,toLocal}=c;
+      let px,rocks,t,over,spawn,last,raf;
+      function reset(){ px=W/2; rocks=[]; t=0; over=false; spawn=0; last=performance.now(); }
+      reset();
+      cv.addEventListener("pointerdown",e=>{ if(over){reset();return;} mv(e); }); cv.addEventListener("pointermove",e=>{ if(!over)mv(e); });
+      function mv(e){ const l=toLocal(e.clientX,e.clientY); px=Math.max(16,Math.min(W-16,l.x)); if(e.preventDefault)e.preventDefault(); }
+      function step(now){ now=now||performance.now(); const dt=now-last; last=now; ctx.fillStyle="#0a0812";ctx.fillRect(0,0,W,H);
+        if(!over){ t+=dt; spawn--; if(spawn<=0){ rocks.push({x:16+rnd(W-32),y:-20,r:10+rnd(16),v:2.5+Math.random()*2+t/8000}); spawn=Math.max(10,26-t/1000); }
+          rocks.forEach(r=>r.y+=r.v); rocks=rocks.filter(r=>r.y<H+30);
+          rocks.forEach(r=>{ if(Math.hypot(r.x-px,r.y-(H-40))<r.r+15){ over=true; FX.buzz(); Store.submitBest("meteor",Math.floor(t/100)); } }); }
+        rocks.forEach(r=>{ ctx.save();ctx.shadowBlur=10;ctx.shadowColor="#e5484d";ctx.fillStyle="#e5484d";ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,TAU);ctx.fill();ctx.restore(); });
+        ctx.save();ctx.shadowBlur=16;ctx.shadowColor="#2fbf71";ctx.fillStyle="#2fbf71";ctx.beginPath();ctx.arc(px,H-40,15,0,TAU);ctx.fill();ctx.restore();
+        const score=Math.floor(t/100); ctx.fillStyle="#fff";ctx.font="bold 20px sans-serif";ctx.textAlign="left";ctx.fillText("⏱ "+score,12,30);
+        st.textContent= over?("Survived "+score+" · best "+Store.best("meteor")+" · tap to retry"):"Drag to dodge the meteors";
+        if(over){ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 26px sans-serif";ctx.fillText("Score "+score,W/2,H/2);}
+        raf=requestAnimationFrame(step); }
+      step(); return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Aim Trainer ----
+  games.push({ id:"aim", name:"Aim Trainer", tag:"Tap targets · 20 seconds", emoji:"🎯", color:"#f2c14e", cat:"Arcade",
+    render(s){ const st=mk("div","status"); s.appendChild(st); const c=makeCanvas(s,340,440); if(!c.ctx)return; const {ctx,W,H,cv,toLocal}=c;
+      let tx,ty,tr,score,time,over,last,acc,raf;
+      function place(){ tr=18+rnd(16); tx=tr+rnd(W-2*tr); ty=tr+44+rnd(H-2*tr-54); }
+      function reset(){ score=0; time=20; over=false; last=performance.now(); acc=0; place(); }
+      reset();
+      cv.addEventListener("pointerdown",e=>{ if(over){reset();return;} const l=toLocal(e.clientX,e.clientY); if(Math.hypot(l.x-tx,l.y-ty)<tr+6){ score++; FX.pop(); FX.haptic(6); place(); } else FX.buzz(); });
+      function step(now){ now=now||performance.now(); const dt=now-last; last=now; if(!over){acc+=dt; if(acc>=1000){acc-=1000;time--; if(time<=0){over=true;FX.win();Store.submitBest("aim",score);}}}
+        ctx.fillStyle="#0a0812";ctx.fillRect(0,0,W,H);
+        if(!over){ ctx.save();ctx.shadowBlur=16;ctx.shadowColor="#f2c14e"; ctx.fillStyle="#f2c14e";ctx.beginPath();ctx.arc(tx,ty,tr,0,TAU);ctx.fill(); ctx.fillStyle="#0a0812";ctx.beginPath();ctx.arc(tx,ty,tr*0.55,0,TAU);ctx.fill(); ctx.fillStyle="#f2c14e";ctx.beginPath();ctx.arc(tx,ty,tr*0.24,0,TAU);ctx.fill(); ctx.restore(); }
+        ctx.fillStyle="#fff";ctx.font="bold 20px sans-serif";ctx.textAlign="left";ctx.fillText("★ "+score,12,30);ctx.textAlign="right";ctx.fillText(time+"s",W-12,30);
+        st.textContent= over?("Hits "+score+" · best "+Store.best("aim")+" · tap to retry"):"Tap the targets fast!";
+        if(over){ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 26px sans-serif";ctx.fillText("Hits "+score,W/2,H/2);}
+        raf=requestAnimationFrame(step); }
+      step(); return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Simon (memory) ----
+  games.push({ id:"simon", name:"Simon", tag:"Repeat the glowing pattern", emoji:"🟩", color:"#2fbf71", cat:"Solo & Puzzle",
+    render(s){ const st=mk("div","status"); s.appendChild(st);
+      const cols=["#e5484d","#2fbf71","#4c7df0","#f2c14e"]; let seq=[],inp=0,phase="ready",best=0;
+      const gridEl=mk("div"); gridEl.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;";
+      const pads=cols.map((col,i)=>{ const p=mk("button"); p.style.cssText="aspect-ratio:1;border:none;border-radius:20px;background:"+col+";opacity:.35;cursor:pointer;transition:opacity .12s;"; p.addEventListener("click",()=>tap(i)); gridEl.appendChild(p); return p; });
+      const btn=mk("button","btn","Start");
+      const flash=(i,ms)=>{ pads[i].style.opacity="1"; FX.pop(); setTimeout(()=>{pads[i].style.opacity=".35";}, ms||280); };
+      async function show(){ phase="show"; st.textContent="Watch…"; await new Promise(r=>setTimeout(r,400)); for(const i of seq){ flash(i,380); await new Promise(r=>setTimeout(r,560)); } phase="input"; inp=0; st.textContent="Your turn — level "+seq.length; }
+      function next(){ seq.push(rnd(4)); show(); }
+      function tap(i){ if(phase!=="input")return; flash(i,160); if(i===seq[inp]){ inp++; if(inp===seq.length){ if(seq.length>best)best=seq.length; Store.submitBest("simon",best); next(); } } else { phase="over"; Store.submitBest("simon",seq.length-1); st.textContent="Oops! Reached level "+seq.length+" · best "+best; FX.buzz(); btn.textContent="Try again"; btn.style.display=""; } }
+      btn.addEventListener("click",()=>{ seq=[]; btn.style.display="none"; next(); });
+      st.textContent="Repeat the pattern — how far can you go?";
+      s.append(st,gridEl,btn);
+    }});
+
+  // ---- Schulte Table ----
+  games.push({ id:"schulte", name:"Schulte Table", tag:"Tap 1→25 as fast as you can", emoji:"🔢", color:"#b06bff", cat:"Solo & Puzzle",
+    render(s){ const st=mk("div","status"); s.appendChild(st); let nxt,start,running;
+      const gridEl=mk("div"); gridEl.style.cssText="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;";
+      function build(){ const order=shuffle([...Array(25)].map((_,i)=>i+1)); nxt=1; running=false; start=0; gridEl.innerHTML="";
+        order.forEach(n=>{ const b=mk("button","cell",""+n); b.style.aspectRatio="1"; b.style.fontSize="19px"; b.addEventListener("click",()=>tap(n,b)); gridEl.appendChild(b); }); }
+      function tap(n,b){ if(!running){ running=true; start=performance.now(); } if(n===nxt){ b.style.background="var(--teal)"; b.disabled=true; nxt++; FX.pop();
+          if(nxt>25){ const t=parseFloat(((performance.now()-start)/1000).toFixed(1)); const bt=Store.get("schulte_best",0); const isBest=bt===0||t<bt; if(isBest)Store.set("schulte_best",t); st.textContent="Done in "+t+"s"+(isBest?" — new best! 🎉":" · best "+bt+"s"); FX.win(); } else st.textContent="Find "+nxt; } else FX.buzz(); }
+      const btn=mk("button","btn","Shuffle & restart"); btn.addEventListener("click",()=>{ build(); st.textContent="Tap 1 to start the timer"; });
+      build(); st.textContent="Tap 1 to start the timer"; s.append(st,gridEl,btn);
+    }});
+
   function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 
   // ---------- build hub (grouped into Kulfi-style categories) ----------
@@ -849,11 +935,18 @@
   const ytShare = document.getElementById("ytShare");
   const ltMsg = document.getElementById("ltMsg");
   const savedEl = document.getElementById("saved");
+  const recentEl = document.getElementById("recent");
   let curId = "jfKfPfyJRdk", curList = null;
+  function pushRecent(item) { if (!item.id) return; let l = Store.get("recent", []); l = l.filter((i) => i.id !== item.id); l.unshift(item); Store.set("recent", l.slice(0, 15)); renderRecent(); }
+  function renderRecent() {
+    if (!recentEl) return; const l = Store.get("recent", []); recentEl.innerHTML = "";
+    if (!l.length) { const n = mk("div", "note", "Songs you play show up here."); n.style.marginTop = "4px"; recentEl.appendChild(n); return; }
+    l.forEach((it) => { const b = mk("button", "station"); b.innerHTML = `<span class="e">${it.type === "list" ? "🎼" : "🎵"}</span><span><div class="t">${it.label}</div><div class="d">${it.type === "list" ? "Playlist" : "Song"}</div></span>`; b.addEventListener("click", () => { if (it.type === "list") loadList(it.id); else loadYt(it.id); }); recentEl.appendChild(b); });
+  }
   const ytId = (v) => { v = (v || "").trim(); const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); if (m) return m[1]; if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v; return null; };
   const ytListId = (v) => { const m = (v || "").match(/[?&]list=([A-Za-z0-9_-]+)/); return m ? m[1] : null; };
-  function loadYt(id, start) { curId = id; curList = null; yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); }
-  function loadList(listId) { curList = listId; curId = null; yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1"; }
+  function loadYt(id, start) { curId = id; curList = null; yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); pushRecent({ type: "song", id, label: "Song " + id.slice(0, 6) }); }
+  function loadList(listId) { curList = listId; curId = null; yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1"; pushRecent({ type: "list", id: listId, label: "Playlist " + listId.slice(0, 6) }); }
   function playInput() { const v = ytInput.value; const list = ytListId(v); if (list) loadList(list); else { const id = ytId(v); if (id) loadYt(id); } }
   ytGo.addEventListener("click", playInput);
   ytInput.addEventListener("keydown", (e) => { if (e.key === "Enter") playInput(); });
@@ -894,6 +987,7 @@
     else if (lt && /^[A-Za-z0-9_-]{11}$/.test(lt)) { const t = Number(q.get("t")); const el = t ? Math.floor((Date.now() - t) / 1000) : 0; loadYt(lt, el > 0 && el < 36000 ? el : 0); goMusic(); if (ltMsg) ltMsg.textContent = "Joined a shared session — same spot 🎧"; }
   })();
   renderSaved();
+  renderRecent();
   const stations = [
     { e: "🎧", t: "Lofi hip hop radio", d: "beats to relax / study to", id: "jfKfPfyJRdk" },
     { e: "🌆", t: "Synthwave radio", d: "chill retro vibes", id: "4xDzrJKXOOY" },
