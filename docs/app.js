@@ -43,6 +43,61 @@
     }, { passive: true });
   }
 
+  // ---------- juice: sound + haptics + confetti ----------
+  let actx = null;
+  function beep(freq, dur, type) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "sine"; o.frequency.value = freq; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.07, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.start(); o.stop(actx.currentTime + dur);
+    } catch (e) {}
+  }
+  const FX = {
+    tap: () => beep(480, 0.05, "square"),
+    pop: () => beep(720, 0.07, "sine"),
+    hit: () => beep(300, 0.05, "triangle"),
+    buzz: () => beep(110, 0.18, "sawtooth"),
+    win: () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.16, "triangle"), i * 110)); FX.haptic(30); confetti(); },
+    haptic: (ms) => { try { if (navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) {} },
+  };
+  function confetti() {
+    const c = document.createElement("canvas");
+    c.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:60";
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    document.body.appendChild(c);
+    const x = c.getContext("2d"); if (!x) { c.remove(); return; }
+    const cols = ["#e5484d", "#2fbf71", "#4c7df0", "#f2c14e", "#b06bff"];
+    const P = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.4, vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 5, s: 4 + Math.random() * 7, col: cols[rnd(cols.length)], a: Math.random() * 6, va: (Math.random() - 0.5) * 0.4 }));
+    let t = 0;
+    (function loop() {
+      t++; x.clearRect(0, 0, c.width, c.height);
+      P.forEach((p) => { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.a += p.va; x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.col; x.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.5); x.restore(); });
+      if (t < 170) requestAnimationFrame(loop); else c.remove();
+    })();
+  }
+
+  // ---------- crisp canvas helper (logical WxH, DPR-scaled) ----------
+  function makeCanvas(parent, W, H) {
+    const cv = document.createElement("canvas");
+    cv.style.cssText = "width:100%;display:block;border-radius:18px;touch-action:none;background:#0a0812;aspect-ratio:" + W + "/" + H;
+    parent.appendChild(cv);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext("2d"); if (ctx) ctx.scale(dpr, dpr);
+    const toLocal = (clientX, clientY) => { const r = cv.getBoundingClientRect(); return { x: (clientX - r.left) / r.width * W, y: (clientY - r.top) / r.height * H }; };
+    return { cv, ctx, W, H, toLocal };
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  const TAU = Math.PI * 2;
+
   // ================= GAMES =================
   const games = [];
 
@@ -347,6 +402,133 @@
       s.append(mk("div","status","Draw together"), cv, pal, clr, H('<div class="note">Both of you can draw — huddle up or pass the phone.</div>'));
     }});
 
+  // ---- Air Hockey (neon, 2 players, multitouch) ----
+  games.push({ id:"airhockey", name:"Air Hockey", tag:"Neon 2-player duel", emoji:"🏒", color:"#4c7df0", cat:"Competitive",
+    render(s){
+      const st=mk("div","status"); st.textContent="0  —  0  · first to 7"; s.appendChild(st);
+      const c=makeCanvas(s,340,560); if(!c.ctx) return; const {ctx,W,H,cv,toLocal}=c;
+      const goalW=150, padR=26, puckR=15; let s1=0,s2=0,over=false,raf;
+      const puck={x:W/2,y:H/2,vx:0,vy:0};
+      const p1={x:W/2,y:H-70}, p2={x:W/2,y:70};
+      const prev={p1:{x:p1.x,y:p1.y}, p2:{x:p2.x,y:p2.y}};
+      const pointers={};
+      function serve(dir){ puck.x=W/2; puck.y=H/2; puck.vx=(Math.random()-.5)*2; puck.vy=dir*3.4; }
+      function assign(e){ const l=toLocal(e.clientX,e.clientY); pointers[e.pointerId]=l.y>H/2?"p1":"p2"; drag(e); }
+      function drag(e){ const w=pointers[e.pointerId]; if(!w)return; const l=toLocal(e.clientX,e.clientY); const p=w==="p1"?p1:p2;
+        p.x=Math.max(padR,Math.min(W-padR,l.x)); const lo=w==="p1"?H/2+padR:padR, hi=w==="p1"?H-padR:H/2-padR; p.y=Math.max(lo,Math.min(hi,l.y)); if(e.preventDefault)e.preventDefault(); }
+      function drop(e){ delete pointers[e.pointerId]; }
+      cv.addEventListener("pointerdown",assign); cv.addEventListener("pointermove",drag); cv.addEventListener("pointerup",drop); cv.addEventListener("pointercancel",drop);
+      function collide(p,key){ const dx=puck.x-p.x, dy=puck.y-p.y, d=Math.hypot(dx,dy), min=puckR+padR;
+        if(d<min && d>0){ const nx=dx/d, ny=dy/d; puck.x=p.x+nx*min; puck.y=p.y+ny*min; const pv={x:p.x-prev[key].x,y:p.y-prev[key].y}; const sp=Math.min(12,Math.hypot(puck.vx,puck.vy)+2.5); puck.vx=nx*sp+pv.x*0.7; puck.vy=ny*sp+pv.y*0.7; FX.hit(); } }
+      function glow(x,y,r,col){ ctx.save(); ctx.shadowBlur=20; ctx.shadowColor=col; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fill(); ctx.restore(); }
+      function step(){ if(over)return;
+        puck.x+=puck.vx; puck.y+=puck.vy; puck.vx*=0.997; puck.vy*=0.997;
+        if(puck.x<puckR){puck.x=puckR;puck.vx*=-1;} if(puck.x>W-puckR){puck.x=W-puckR;puck.vx*=-1;}
+        const g0=(W-goalW)/2, g1=(W+goalW)/2;
+        if(puck.y<puckR){ if(puck.x>g0&&puck.x<g1){s1++;score();} else {puck.y=puckR;puck.vy*=-1;} }
+        if(puck.y>H-puckR){ if(puck.x>g0&&puck.x<g1){s2++;score();} else {puck.y=H-puckR;puck.vy*=-1;} }
+        collide(p1,"p1"); collide(p2,"p2"); prev.p1={x:p1.x,y:p1.y}; prev.p2={x:p2.x,y:p2.y};
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle="rgba(255,255,255,.12)"; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke(); ctx.beginPath();ctx.arc(W/2,H/2,52,0,TAU);ctx.stroke();
+        ctx.lineWidth=6; ctx.strokeStyle="#4c7df0"; ctx.beginPath();ctx.moveTo((W-goalW)/2,3);ctx.lineTo((W+goalW)/2,3);ctx.stroke();
+        ctx.strokeStyle="#e5484d"; ctx.beginPath();ctx.moveTo((W-goalW)/2,H-3);ctx.lineTo((W+goalW)/2,H-3);ctx.stroke();
+        glow(p1.x,p1.y,padR,"#e5484d"); glow(p2.x,p2.y,padR,"#4c7df0"); glow(puck.x,puck.y,puckR,"#ffffff");
+        if(s1>=7||s2>=7){ over=true; st.textContent=(s1>=7?"Player 1 (bottom) wins!":"Player 2 (top) wins!")+" 🎉"; FX.win(); return; }
+        raf=requestAnimationFrame(step);
+      }
+      function score(){ st.textContent=s1+"  —  "+s2+"  · first to 7"; FX.buzz(); FX.haptic(20); serve(s1>s2?1:-1); }
+      serve(1); step();
+      s.append(H('<div class="note">Player 1 drags the red paddle (bottom), Player 2 the blue (top). It\'s multi-touch — play at the same time.</div>'));
+      return ()=>{ over=true; cancelAnimationFrame(raf); };
+    }});
+
+  // ---- Beat Tap (rhythm) ----
+  games.push({ id:"beat", name:"Beat Tap", tag:"Tap to the rhythm", emoji:"🎶", color:"#2fbf71", cat:"Arcade",
+    render(s){
+      const st=mk("div","status"); s.appendChild(st);
+      const c=makeCanvas(s,340,520); if(!c.ctx) return; const {ctx,W,H,cv,toLocal}=c;
+      const cols=4, colW=W/cols, hitY=H-70, colColors=["#e5484d","#2fbf71","#4c7df0","#f2c14e"];
+      let notes=[],score=0,combo=0,best=0,life=5,spawnT=0,over=false,raf;
+      function hit(col){ let bi=-1,bd=1e9; notes.forEach((n,i)=>{ if(n.c===col&&!n.done){ const d=Math.abs(n.y-hitY); if(d<bd){bd=d;bi=i;} } });
+        if(bi>=0&&bd<44){ notes[bi].done=true; score+=10+combo; combo++; if(combo>best)best=combo; FX.pop(); FX.haptic(6); } else { combo=0; FX.buzz(); } }
+      cv.addEventListener("pointerdown",e=>{ if(over){restart();return;} const l=toLocal(e.clientX,e.clientY); hit(Math.max(0,Math.min(cols-1,Math.floor(l.x/colW)))); });
+      function step(){ if(!over){ spawnT--; if(spawnT<=0){ notes.push({c:rnd(cols),y:-30,done:false}); spawnT=38+rnd(28); } }
+        ctx.clearRect(0,0,W,H);
+        for(let i=0;i<cols;i++){ ctx.fillStyle="rgba(255,255,255,"+(i%2?0.03:0.06)+")"; ctx.fillRect(i*colW,0,colW,H); }
+        ctx.strokeStyle="#fff"; ctx.lineWidth=3; ctx.beginPath();ctx.moveTo(0,hitY);ctx.lineTo(W,hitY);ctx.stroke();
+        notes.forEach(n=>{ if(n.done)return; n.y+=4.2; ctx.save();ctx.shadowBlur=14;ctx.shadowColor=colColors[n.c];ctx.fillStyle=colColors[n.c]; roundRect(ctx,n.c*colW+8,n.y,colW-16,26,8);ctx.fill();ctx.restore();
+          if(n.y>hitY+34){ n.done=true; combo=0; life--; FX.buzz(); if(life<=0)over=true; } });
+        for(let i=notes.length-1;i>=0;i--) if(notes[i].done && notes[i].y>H+40) notes.splice(i,1);
+        st.textContent = over? ("Score "+score+" · best combo "+best+" · tap to retry") : ("Score "+score+" · Combo "+combo+" · ❤"+Math.max(0,life));
+        if(over){ ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(0,0,W,H); ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 28px sans-serif";ctx.fillText(""+score,W/2,H/2); ctx.font="16px sans-serif";ctx.fillStyle="#a99fc0";ctx.fillText("tap to retry",W/2,H/2+28); }
+        raf=requestAnimationFrame(step);
+      }
+      function restart(){ notes=[];score=0;combo=0;life=5;spawnT=0;over=false; }
+      step();
+      s.append(H('<div class="note">Tap a column the moment its tile hits the white line. Keep the combo alive!</div>'));
+      return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Bubble Pop ----
+  games.push({ id:"bubble", name:"Bubble Pop", tag:"Pop fast · 30 seconds", emoji:"🫧", color:"#b06bff", cat:"Arcade",
+    render(s){
+      const st=mk("div","status"); s.appendChild(st);
+      const c=makeCanvas(s,340,520); if(!c.ctx) return; const {ctx,W,H,cv,toLocal}=c;
+      const cols=["#e5484d","#2fbf71","#4c7df0","#f2c14e","#b06bff"];
+      let bubbles=[],parts=[],score=0,time=30,over=false,spawnT=0,last=performance.now(),acc=0,raf;
+      cv.addEventListener("pointerdown",e=>{ if(over){restart();return;} const l=toLocal(e.clientX,e.clientY);
+        for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; if(Math.hypot(b.x-l.x,b.y-l.y)<b.r){ burst(b); bubbles.splice(i,1); score++; FX.pop(); FX.haptic(6); break; } } });
+      function burst(b){ for(let k=0;k<10;k++) parts.push({x:b.x,y:b.y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:22,col:b.col}); }
+      function restart(){ bubbles=[];parts=[];score=0;time=30;over=false;spawnT=0;last=performance.now();acc=0; }
+      function step(now){ now=now||performance.now(); const dt=now-last; last=now; if(!over){ acc+=dt; if(acc>=1000){acc-=1000;time--; if(time<=0){over=true;FX.win();}} }
+        if(!over){ spawnT--; if(spawnT<=0){ const r=18+rnd(16); bubbles.push({x:r+rnd(W-2*r),y:H+r,r,vy:1+Math.random()*1.7,col:cols[rnd(cols.length)]}); spawnT=16+rnd(18); } }
+        ctx.clearRect(0,0,W,H);
+        bubbles.forEach(b=>{ b.y-=b.vy; ctx.save();ctx.globalAlpha=.9;ctx.shadowBlur=14;ctx.shadowColor=b.col;ctx.fillStyle=b.col;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();ctx.restore(); });
+        bubbles=bubbles.filter(b=>b.y>-b.r-10);
+        parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.life--; ctx.globalAlpha=Math.max(0,p.life/22); ctx.fillStyle=p.col; ctx.fillRect(p.x,p.y,4,4); }); ctx.globalAlpha=1; parts=parts.filter(p=>p.life>0);
+        st.textContent = over? ("Time! Score "+score+" · tap to retry") : ("Score "+score+" · ⏱ "+time+"s");
+        if(over){ ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(0,0,W,H); ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 30px sans-serif";ctx.fillText("Score "+score,W/2,H/2); }
+        raf=requestAnimationFrame(step);
+      }
+      step();
+      s.append(H('<div class="note">Tap bubbles before they float away. How many can you pop in 30s?</div>'));
+      return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Brick Breaker ----
+  games.push({ id:"brick", name:"Brick Breaker", tag:"Clear every brick", emoji:"🧱", color:"#f2c14e", cat:"Arcade",
+    render(s){
+      const st=mk("div","status"); s.appendChild(st);
+      const c=makeCanvas(s,340,520); if(!c.ctx) return; const {ctx,W,H,cv,toLocal}=c;
+      const padW=74,padH=12,br=7; let pad,ball,bricks,lives,over,won,launched,raf,celebrated;
+      function level(){ pad={x:W/2-padW/2,y:H-30}; ball={x:W/2,y:H-46,vx:0,vy:0}; launched=false; over=false; won=false; celebrated=false; lives=3;
+        bricks=[]; const rows=5,cn=6,bw=(W-20)/cn,bh=22,bc=["#e5484d","#f2c14e","#2fbf71","#4c7df0","#b06bff"];
+        for(let r=0;r<rows;r++)for(let cc=0;cc<cn;cc++)bricks.push({x:10+cc*bw,y:52+r*(bh+6),w:bw-6,h:bh,col:bc[r%bc.length],alive:true}); }
+      level();
+      cv.addEventListener("pointerdown",e=>{ if(over||won){level();return;} launched=true; aim(e); });
+      cv.addEventListener("pointermove",aim);
+      function aim(e){ const l=toLocal(e.clientX,e.clientY); pad.x=Math.max(0,Math.min(W-padW,l.x-padW/2)); if(!launched)ball.x=pad.x+padW/2; if(e.preventDefault)e.preventDefault(); }
+      function step(){ ctx.clearRect(0,0,W,H);
+        if(launched && ball.vx===0 && ball.vy===0){ ball.vx=2.6; ball.vy=-3.6; }
+        if(launched && !over && !won){ ball.x+=ball.vx; ball.y+=ball.vy;
+          if(ball.x<br){ball.x=br;ball.vx*=-1;} if(ball.x>W-br){ball.x=W-br;ball.vx*=-1;} if(ball.y<br){ball.y=br;ball.vy*=-1;}
+          if(ball.y>pad.y-br && ball.y<pad.y+padH && ball.x>pad.x && ball.x<pad.x+padW && ball.vy>0){ ball.vy*=-1; ball.y=pad.y-br; ball.vx=((ball.x-(pad.x+padW/2))/(padW/2))*4.2; FX.hit(); }
+          if(ball.y>H+20){ lives--; FX.buzz(); if(lives<=0)over=true; else { ball.x=pad.x+padW/2; ball.y=pad.y-16; ball.vx=0; ball.vy=0; launched=false; } }
+          bricks.forEach(b=>{ if(b.alive && ball.x>b.x && ball.x<b.x+b.w && ball.y>b.y && ball.y<b.y+b.h){ b.alive=false; ball.vy*=-1; FX.pop(); } });
+          if(bricks.every(b=>!b.alive)){ won=true; if(!celebrated){celebrated=true;FX.win();} }
+        }
+        bricks.forEach(b=>{ if(!b.alive)return; ctx.save();ctx.shadowBlur=8;ctx.shadowColor=b.col;ctx.fillStyle=b.col; roundRect(ctx,b.x,b.y,b.w,b.h,5);ctx.fill();ctx.restore(); });
+        ctx.fillStyle="#f3eefb"; roundRect(ctx,pad.x,pad.y,padW,padH,6); ctx.fill();
+        ctx.save();ctx.shadowBlur=12;ctx.shadowColor="#fff";ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(ball.x,ball.y,br,0,TAU);ctx.fill();ctx.restore();
+        st.textContent = won? "Cleared! 🎉 tap to replay" : over? "Game over · tap to replay" : ("Lives: "+lives+(launched?"":" · tap to launch"));
+        if(over||won){ ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,W,H); ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 26px sans-serif";ctx.fillText(won?"Cleared!":"Game over",W/2,H/2); }
+        raf=requestAnimationFrame(step);
+      }
+      step();
+      s.append(H('<div class="note">Drag to move the paddle, tap to launch. Break all the bricks!</div>'));
+      return ()=>cancelAnimationFrame(raf);
+    }});
+
   function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 
   // ---------- build hub (grouped into Kulfi-style categories) ----------
@@ -354,7 +536,7 @@
     rps:"Competitive", rx:"Competitive", tapwar:"Competitive", whack:"Competitive", hilo:"Competitive",
     mem:"Solo & Puzzle", g2048:"Solo & Puzzle", snake:"Solo & Puzzle",
     tot:"Conversation", wyr:"Conversation" };
-  const ORDER = ["Conversation", "Competitive", "Co-op", "Solo & Puzzle", "More"];
+  const ORDER = ["Arcade", "Competitive", "Conversation", "Co-op", "Solo & Puzzle", "More"];
   const catOf = (g) => g.cat || CAT[g.id] || "More";
   grid.className = ""; // it now holds category sections, each with its own sub-grid
   function tileFor(g) {
