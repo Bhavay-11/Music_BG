@@ -65,6 +65,13 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Firebase pulls both protobuf-javalite and protolite-well-known-types, which repackage the same
+// com.google.protobuf.* classes and trip AGP's duplicate-class check. protolite provides the classes
+// Firestore needs, so drop the standalone javalite.
+configurations.all {
+    exclude(group = "com.google.protobuf", module = "protobuf-javalite")
+}
+
 dependencies {
     // Compose
     implementation(platform(libs.androidx.compose.bom))

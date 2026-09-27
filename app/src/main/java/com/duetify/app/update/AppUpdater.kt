@@ -137,7 +137,7 @@ class AppUpdater @Inject constructor(
         version.split(Regex("[^0-9]+")).filter { it.isNotEmpty() }.map { it.toIntOrNull() ?: 0 }
 
     private companion object {
-        const val REPO = "YOUR_GITHUB_USERNAME/Duetify"
+        const val REPO = "Bhavay-11/Duetify"
         const val APK_MIME = "application/vnd.android.package-archive"
     }
 }
