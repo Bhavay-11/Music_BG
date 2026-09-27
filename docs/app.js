@@ -28,6 +28,21 @@
     cleanup = g.render(stage) || null;
     window.scrollTo(0, 0);
   }
+  function openScoreboard() {
+    if (cleanup) { cleanup(); cleanup = null; }
+    hub.classList.remove("active"); stage.innerHTML = ""; stage.classList.add("active");
+    backBtn.classList.add("show"); document.body.classList.add("in-game"); subtitle.textContent = "Your best scores";
+    const wrap = document.createElement("div");
+    wrap.appendChild(mk("div", "status", "🏆 Best Scores"));
+    Object.keys(SCOREABLE).forEach((id) => {
+      const row = mk("div", "station"); row.style.cursor = "default";
+      row.innerHTML = `<span class="e">🎮</span><span><div class="t">${SCOREABLE[id]}</div><div class="d">Best: ${Store.best(id)}</div></span>`;
+      wrap.appendChild(row);
+    });
+    wrap.appendChild(mk("div", "note", "🪙 " + Store.coins() + " coins · 🔥 " + Store.get("streak", 0) + "-day streak. Beat your best — scores save on this device."));
+    stage.appendChild(wrap);
+    window.scrollTo(0, 0);
+  }
   backBtn.onclick = showHub;
 
   // ---------- helpers ----------
@@ -97,6 +112,30 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   const TAU = Math.PI * 2;
+
+  // ---------- persistence: best scores, coins, daily streak ----------
+  const Store = {
+    get(k, d) { try { const v = localStorage.getItem("mbg_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("mbg_" + k, JSON.stringify(v)); } catch (e) {} },
+    best(id) { return Store.get("best_" + id, 0); },
+    submitBest(id, score) { score = Math.round(score) || 0; if (score > Store.best(id)) { Store.set("best_" + id, score); return true; } return false; },
+    coins() { return Store.get("coins", 0); },
+    addCoins(n) { Store.set("coins", Store.coins() + n); },
+  };
+  const SCOREABLE = { flappy: "Flappy Tap", dashrun: "Dash Run", shooter: "Space Shooter", jumper: "Sky Hopper", bubble: "Bubble Pop", beat: "Beat Tap", g2048: "2048", snake: "Snake", whack: "Whack-a-Tap" };
+  function dailyCheck() {
+    const today = new Date().toISOString().slice(0, 10);
+    const last = Store.get("lastDay", null);
+    let streak = Store.get("streak", 0);
+    let reward = 0;
+    if (last !== today) {
+      const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      streak = last === y ? streak + 1 : 1;
+      reward = 10 + Math.min(streak, 10) * 5;
+      Store.set("streak", streak); Store.set("lastDay", today); Store.addCoins(reward);
+    }
+    return { streak: Store.get("streak", 0), coins: Store.coins(), reward };
+  }
 
   // ================= GAMES =================
   const games = [];
@@ -232,7 +271,7 @@
         if(g.join(",")!==before){ spawn(); draw(); } }
       function movesLeft(){ if(g.some(v=>!v))return true; for(let r=0;r<4;r++)for(let c=0;c<4;c++){ const v=g[r*4+c]; if(c<3&&v===g[r*4+c+1])return true; if(r<3&&v===g[(r+1)*4+c])return true; } return false; }
       function draw(){ cells.forEach((c,i)=>{ c.textContent=g[i]||""; c.style.background=colors[g[i]]||"#f7e463"; c.style.color=g[i]<=4?"var(--muted)":"#1a1030"; });
-        st.textContent = movesLeft()? "Score: "+score : "Game over · "+score; }
+        if(!movesLeft())Store.submitBest("g2048",score); st.textContent = movesLeft()? "Score: "+score : "Game over · "+score; }
       swipe(board,move);
       const dpad=H(`<div class="dpad"><div></div><button class="dbtn" data-d="up">▲</button><div></div>
         <button class="dbtn" data-d="left">◀</button><div></div><button class="dbtn" data-d="right">▶</button>
@@ -249,7 +288,7 @@
       const st=mk("div","status"); const board=mk("div","board"); board.style.gridTemplateColumns=`repeat(${N},1fr)`; board.style.background="var(--card)"; board.style.padding="4px"; board.style.borderRadius="12px";
       const cells=Array.from({length:N*N},()=>{const c=mk("div");c.style.aspectRatio="1";c.style.borderRadius="3px";return c;}); cells.forEach(c=>board.appendChild(c));
       function draw(){ cells.forEach((c,i)=>{ c.style.background = i===snake[0]?"var(--coral)": snake.includes(i)?"#8a3f56": i===food?"var(--teal)":"var(--hi)"; });
-        st.textContent = over? "Game over · "+score : "Score: "+score; }
+        if(over)Store.submitBest("snake",score); st.textContent = over? "Game over · "+score : "Score: "+score; }
       const DV={up:[-1,0],right:[0,1],down:[1,0],left:[0,-1]};
       let d="right";
       function tick(){ const [dr,dc]=DV[d]; const hr=Math.floor(snake[0]/N)+dr, hc=snake[0]%N+dc;
@@ -314,7 +353,7 @@
       function draw(){cells.forEach((c,i)=>{c.style.background=(run&&i===target)?"var(--coral)":"var(--hi)";c.textContent=(run&&i===target)?"🎯":"";});st.textContent=run?`Score ${score} · ${left}s`:(best?`Best: ${best}`:"Tap Start");}
       function moveT(){let n=rnd(9);if(n===target)n=(n+1)%9;target=n;draw();clearTimeout(t2);t2=setTimeout(moveT,850);}
       function hit(i){if(run&&i===target){score++;moveT();}}
-      function start(){score=0;left=20;run=true;btn.style.display="none";moveT();clearInterval(t1);t1=setInterval(()=>{left--;draw();if(left<=0){run=false;clearInterval(t1);clearTimeout(t2);if(score>best)best=score;btn.textContent="Play again";btn.style.display="";draw();}},1000);draw();}
+      function start(){score=0;left=20;run=true;btn.style.display="none";moveT();clearInterval(t1);t1=setInterval(()=>{left--;draw();if(left<=0){run=false;clearInterval(t1);clearTimeout(t2);if(score>best)best=score;Store.submitBest("whack",score);btn.textContent="Play again";btn.style.display="";draw();}},1000);draw();}
       btn.onclick=start;
       s.append(st,board,btn); draw();
       return ()=>{clearInterval(t1);clearTimeout(t2);}; }});
@@ -457,7 +496,7 @@
         for(let i=0;i<cols;i++){ ctx.fillStyle="rgba(255,255,255,"+(i%2?0.03:0.06)+")"; ctx.fillRect(i*colW,0,colW,H); }
         ctx.strokeStyle="#fff"; ctx.lineWidth=3; ctx.beginPath();ctx.moveTo(0,hitY);ctx.lineTo(W,hitY);ctx.stroke();
         notes.forEach(n=>{ if(n.done)return; n.y+=4.2; ctx.save();ctx.shadowBlur=14;ctx.shadowColor=colColors[n.c];ctx.fillStyle=colColors[n.c]; roundRect(ctx,n.c*colW+8,n.y,colW-16,26,8);ctx.fill();ctx.restore();
-          if(n.y>hitY+34){ n.done=true; combo=0; life--; FX.buzz(); if(life<=0)over=true; } });
+          if(n.y>hitY+34){ n.done=true; combo=0; life--; FX.buzz(); if(life<=0){over=true;Store.submitBest("beat",score);} } });
         for(let i=notes.length-1;i>=0;i--) if(notes[i].done && notes[i].y>H+40) notes.splice(i,1);
         st.textContent = over? ("Score "+score+" · best combo "+best+" · tap to retry") : ("Score "+score+" · Combo "+combo+" · ❤"+Math.max(0,life));
         if(over){ ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(0,0,W,H); ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 28px sans-serif";ctx.fillText(""+score,W/2,H/2); ctx.font="16px sans-serif";ctx.fillStyle="#a99fc0";ctx.fillText("tap to retry",W/2,H/2+28); }
@@ -480,7 +519,7 @@
         for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; if(Math.hypot(b.x-l.x,b.y-l.y)<b.r){ burst(b); bubbles.splice(i,1); score++; FX.pop(); FX.haptic(6); break; } } });
       function burst(b){ for(let k=0;k<10;k++) parts.push({x:b.x,y:b.y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:22,col:b.col}); }
       function restart(){ bubbles=[];parts=[];score=0;time=30;over=false;spawnT=0;last=performance.now();acc=0; }
-      function step(now){ now=now||performance.now(); const dt=now-last; last=now; if(!over){ acc+=dt; if(acc>=1000){acc-=1000;time--; if(time<=0){over=true;FX.win();}} }
+      function step(now){ now=now||performance.now(); const dt=now-last; last=now; if(!over){ acc+=dt; if(acc>=1000){acc-=1000;time--; if(time<=0){over=true;FX.win();Store.submitBest("bubble",score);}} }
         if(!over){ spawnT--; if(spawnT<=0){ const r=18+rnd(16); bubbles.push({x:r+rnd(W-2*r),y:H+r,r,vy:1+Math.random()*1.7,col:cols[rnd(cols.length)]}); spawnT=16+rnd(18); } }
         ctx.clearRect(0,0,W,H);
         bubbles.forEach(b=>{ b.y-=b.vy; ctx.save();ctx.globalAlpha=.9;ctx.shadowBlur=14;ctx.shadowColor=b.col;ctx.fillStyle=b.col;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();ctx.restore(); });
@@ -541,7 +580,7 @@
           pipes.forEach(p=>p.x-=2.5); pipes=pipes.filter(p=>p.x>-pw);
           pipes.forEach(p=>{ if(!p.scored&&p.x+pw<W/2-R){p.scored=true;score++;FX.pop();}
             if(W/2+R>p.x&&W/2-R<p.x+pw&&(bird.y-R<p.top||bird.y+R>p.top+gap)){over=true;FX.buzz();} });
-          if(bird.y>H-R||bird.y<R){over=true;FX.buzz();} }
+          if(bird.y>H-R||bird.y<R){over=true;FX.buzz();Store.submitBest("flappy",score);} }
         pipes.forEach(p=>{ ctx.save();ctx.shadowBlur=10;ctx.shadowColor="#2fbf71";ctx.fillStyle="#2fbf71"; ctx.fillRect(p.x,0,pw,p.top); ctx.fillRect(p.x,p.top+gap,pw,H-p.top-gap); ctx.restore(); });
         ctx.save();ctx.shadowBlur=16;ctx.shadowColor="#f2c14e";ctx.fillStyle="#f2c14e";ctx.beginPath();ctx.arc(W/2,bird.y,R,0,TAU);ctx.fill();ctx.restore();
         ctx.fillStyle="#fff";ctx.font="bold 30px sans-serif";ctx.textAlign="center";ctx.fillText(score,W/2,58);
@@ -565,7 +604,7 @@
           spawn--; if(spawn<=0){ obs.push({x:W,h:24+rnd(30)}); spawn=Math.max(48,95-speed*4); }
           cspawn--; if(cspawn<=0){ coins.push({x:W,y:groundY-40-rnd(70)}); cspawn=40+rnd(40); }
           obs.forEach(o=>o.x-=speed); coins.forEach(o=>o.x-=speed); obs=obs.filter(o=>o.x>-30); coins=coins.filter(o=>o.x>-20);
-          obs.forEach(o=>{ if(Math.abs(o.x-px)<R+12 && py>groundY-o.h-R+8){ over=true; FX.buzz(); } });
+          obs.forEach(o=>{ if(Math.abs(o.x-px)<R+12 && py>groundY-o.h-R+8){ over=true; FX.buzz(); Store.submitBest("dashrun",Math.floor(dist/10)); } });
           for(let i=coins.length-1;i>=0;i--){ if(Math.hypot(coins[i].x-px,coins[i].y-py)<R+12){ coins.splice(i,1); dist+=50; FX.pop(); } }
           score=Math.floor(dist/10);
         }
@@ -595,7 +634,7 @@
           bul.forEach(b=>b.y-=7); bul=bul.filter(b=>b.y>-10); foes.forEach(f=>f.y+=f.vy);
           for(let fi=foes.length-1;fi>=0;fi--){ const f=foes[fi]; let hitI=-1; for(let bi=0;bi<bul.length;bi++){ if(Math.abs(f.x-bul[bi].x)<18&&Math.abs(f.y-bul[bi].y)<18){hitI=bi;break;} }
             if(hitI>=0){ boom(f.x,f.y); foes.splice(fi,1); bul.splice(hitI,1); score+=10; FX.pop(); continue; }
-            if(f.y>H+20){ foes.splice(fi,1); lives--; FX.buzz(); if(lives<=0)over=true; } }
+            if(f.y>H+20){ foes.splice(fi,1); lives--; FX.buzz(); if(lives<=0){over=true;Store.submitBest("shooter",score);} } }
         }
         parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;ctx.globalAlpha=Math.max(0,p.life/18);ctx.fillStyle=p.col;ctx.fillRect(p.x,p.y,3,3);});ctx.globalAlpha=1;parts=parts.filter(p=>p.life>0);
         ctx.save();ctx.shadowBlur=8;ctx.shadowColor="#f2c14e";ctx.fillStyle="#f2c14e";bul.forEach(b=>ctx.fillRect(b.x-2,b.y-9,4,11));ctx.restore();
@@ -623,7 +662,7 @@
           if(py<H/2){ const dy=H/2-py; py=H/2; plats.forEach(p=>p.y+=dy); score+=Math.floor(dy); }
           plats.forEach(p=>{ if(vy>0&&px>p.x-32&&px<p.x+32&&py+15>p.y&&py+15<p.y+16){ vy=-10; FX.tap(); } });
           plats.forEach(p=>{ if(p.y>H){ p.y-=H+rnd(60); p.x=rnd(W-60)+30; } });
-          if(py>H+20){over=true;FX.buzz();}
+          if(py>H+20){over=true;FX.buzz();Store.submitBest("jumper",score);}
         }
         plats.forEach(p=>{ ctx.save();ctx.shadowBlur=8;ctx.shadowColor="#2fbf71";ctx.fillStyle="#2fbf71"; roundRect(ctx,p.x-32,p.y,64,12,6);ctx.fill();ctx.restore(); });
         ctx.save();ctx.shadowBlur=14;ctx.shadowColor="#f2c14e";ctx.fillStyle="#f2c14e";ctx.beginPath();ctx.arc(px,py,15,0,TAU);ctx.fill();ctx.restore();
@@ -694,6 +733,22 @@
   const ORDER = ["Arcade", "Competitive", "Conversation", "Co-op", "Solo & Puzzle", "More"];
   const catOf = (g) => g.cat || CAT[g.id] || "More";
   grid.className = ""; // it now holds category sections, each with its own sub-grid
+  // Daily streak + coins + reward bar (addiction loop).
+  (function statsBar() {
+    const d = dailyCheck();
+    const bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:8px;align-items:center;margin:2px 2px 4px;";
+    const pill = (txt) => { const e = mk("div", null, txt); e.style.cssText = "background:var(--hi);border-radius:50px;padding:8px 14px;font-weight:800;font-size:14px;"; return e; };
+    const sb = mk("button", null, "🏆 Scores"); sb.style.cssText = "margin-left:auto;background:var(--coral);color:#fff;border:none;border-radius:50px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:14px;"; sb.addEventListener("click", openScoreboard);
+    bar.append(pill("🔥 " + d.streak), pill("🪙 " + d.coins), sb);
+    hub.insertBefore(bar, grid);
+    if (d.reward > 0) {
+      const rw = document.createElement("div");
+      rw.style.cssText = "background:linear-gradient(90deg,rgba(242,193,78,.25),rgba(229,72,77,.15));border:1px solid rgba(242,193,78,.5);border-radius:14px;padding:10px 14px;margin:0 2px 10px;font-size:14px;";
+      rw.innerHTML = "🎁 <b>Daily reward!</b> +" + d.reward + " coins · Day " + d.streak + " streak 🔥";
+      hub.insertBefore(rw, grid);
+    }
+  })();
   function tileFor(g) {
     const t = mk("button", "tile"); t.onclick = () => openGame(g);
     const ic = mk("div", "ic", g.emoji); ic.style.background = g.color;
@@ -726,34 +781,55 @@
   const yt = document.getElementById("yt");
   const ytInput = document.getElementById("ytInput");
   const ytGo = document.getElementById("ytGo");
+  const ytSave = document.getElementById("ytSave");
   const ytShare = document.getElementById("ytShare");
   const ltMsg = document.getElementById("ltMsg");
-  let curId = "jfKfPfyJRdk";
+  const savedEl = document.getElementById("saved");
+  let curId = "jfKfPfyJRdk", curList = null;
   const ytId = (v) => { v = (v || "").trim(); const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); if (m) return m[1]; if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v; return null; };
-  const loadYt = (id, start) => { curId = id; yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); };
-  ytGo.addEventListener("click", () => { const id = ytId(ytInput.value); if (id) loadYt(id); });
-  ytInput.addEventListener("keydown", (e) => { if (e.key === "Enter") ytGo.click(); });
-  // "Listen together": share a link that opens the same track, seeked to the same spot.
-  ytShare.addEventListener("click", async () => {
-    const link = location.origin + location.pathname + "?lt=" + curId + "&t=" + Date.now();
-    try {
-      if (navigator.share) { await navigator.share({ title: "Listen together on Music_BG", url: link }); ltMsg.textContent = "Shared! You'll both hear the same track."; }
-      else { await navigator.clipboard.writeText(link); ltMsg.textContent = "Link copied — send it to your partner. You'll both hear the same track from the same spot."; }
-    } catch (e) { ltMsg.textContent = "Copy this link to listen together: " + link; }
+  const ytListId = (v) => { const m = (v || "").match(/[?&]list=([A-Za-z0-9_-]+)/); return m ? m[1] : null; };
+  function loadYt(id, start) { curId = id; curList = null; yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); }
+  function loadList(listId) { curList = listId; curId = null; yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1"; }
+  function playInput() { const v = ytInput.value; const list = ytListId(v); if (list) loadList(list); else { const id = ytId(v); if (id) loadYt(id); } }
+  ytGo.addEventListener("click", playInput);
+  ytInput.addEventListener("keydown", (e) => { if (e.key === "Enter") playInput(); });
+  function renderSaved() {
+    const list = Store.get("saved", []); savedEl.innerHTML = "";
+    if (!list.length) { const n = mk("div", "note", "Tap ★ Save to keep a song or playlist here."); n.style.marginTop = "4px"; savedEl.appendChild(n); return; }
+    list.forEach((it, idx) => {
+      const b = mk("button", "station");
+      b.innerHTML = `<span class="e">${it.type === "list" ? "🎼" : "🎵"}</span><span style="flex:1"><div class="t">${it.label}</div><div class="d">${it.type === "list" ? "Playlist" : "Song"}</div></span>`;
+      const x = mk("span", "", "✕"); x.style.cssText = "color:var(--muted);padding:0 6px;font-size:16px;";
+      x.addEventListener("click", (ev) => { ev.stopPropagation(); const l = Store.get("saved", []); l.splice(idx, 1); Store.set("saved", l); renderSaved(); });
+      b.appendChild(x);
+      b.addEventListener("click", () => { if (it.type === "list") loadList(it.id); else loadYt(it.id); });
+      savedEl.appendChild(b);
+    });
+  }
+  ytSave.addEventListener("click", () => {
+    const list = Store.get("saved", []);
+    const item = curList ? { type: "list", id: curList, label: "Playlist " + curList.slice(0, 6) } : { type: "song", id: curId, label: "Song " + (curId || "").slice(0, 6) };
+    if (!item.id) return;
+    if (!list.some((i) => i.id === item.id)) { list.unshift(item); Store.set("saved", list.slice(0, 40)); renderSaved(); ltMsg.textContent = "Saved to My Music ★"; }
+    else ltMsg.textContent = "Already in My Music";
   });
-  // If opened from a shared "listen together" link, jump to Music and sync to the sender's spot.
+  // "Listen / jam together": share a link that opens the same song or playlist, in sync.
+  ytShare.addEventListener("click", async () => {
+    const base = location.origin + location.pathname;
+    const link = curList ? (base + "?ltl=" + curList) : (base + "?lt=" + curId + "&t=" + Date.now());
+    try {
+      if (navigator.share) { await navigator.share({ title: "Jam together on Music_BG", url: link }); ltMsg.textContent = "Shared! You'll both hear the same thing."; }
+      else { await navigator.clipboard.writeText(link); ltMsg.textContent = "Link copied — send it so you both hear the same track/playlist."; }
+    } catch (e) { ltMsg.textContent = "Share this link: " + link; }
+  });
   (function joinListen() {
     const q = new URLSearchParams(location.search);
-    const lt = q.get("lt");
-    if (lt && /^[A-Za-z0-9_-]{11}$/.test(lt)) {
-      const t = Number(q.get("t"));
-      const elapsed = t ? Math.floor((Date.now() - t) / 1000) : 0;
-      loadYt(lt, elapsed > 0 && elapsed < 36000 ? elapsed : 0);
-      const musicTab = document.querySelector('[data-tab="music"]');
-      if (musicTab) musicTab.click();
-      if (ltMsg) ltMsg.textContent = "Joined a shared session — same track, same spot 🎧";
-    }
+    const lt = q.get("lt"), ltl = q.get("ltl");
+    const goMusic = () => { const m = document.querySelector('[data-tab="music"]'); if (m) m.click(); };
+    if (ltl && /^[A-Za-z0-9_-]+$/.test(ltl)) { loadList(ltl); goMusic(); if (ltMsg) ltMsg.textContent = "Joined a shared playlist 🎧"; }
+    else if (lt && /^[A-Za-z0-9_-]{11}$/.test(lt)) { const t = Number(q.get("t")); const el = t ? Math.floor((Date.now() - t) / 1000) : 0; loadYt(lt, el > 0 && el < 36000 ? el : 0); goMusic(); if (ltMsg) ltMsg.textContent = "Joined a shared session — same spot 🎧"; }
   })();
+  renderSaved();
   const stations = [
     { e: "🎧", t: "Lofi hip hop radio", d: "beats to relax / study to", id: "jfKfPfyJRdk" },
     { e: "🌆", t: "Synthwave radio", d: "chill retro vibes", id: "4xDzrJKXOOY" },
