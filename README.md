@@ -4,6 +4,8 @@
 
 > **Not shippable to Google Play.** Music_BG streams from YouTube and depends on GPLv3 `NewPipeExtractor`; it is a personal / educational project, not a distributable product.
 
+**▶ Play the games in any browser (iPhone, Android, desktop):** https://bhavay-11.github.io/Music_BG/ — a Progressive Web App (installable to your home screen), no App Store needed. **Android APK:** see [Releases](https://github.com/Bhavay-11/Music_BG/releases).
+
 ---
 
 ## Features
