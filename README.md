@@ -1,8 +1,8 @@
-# Duetify
+# Music_BG
 
 **v2.0.2** — A dark, glassmorphic **music + games** app for Android, built for couples and friends to enjoy together. Real audio streamed from YouTube via NewPipeExtractor and played through AndroidX Media3, plus a **Play** hub of duet mini‑games (YouTube‑Playables style) — including a live long‑distance "This or That" that syncs across two phones. Wrapped in a Jetpack Compose aurora‑glass UI (coral accent, Plus Jakarta Sans). Ad‑free and tracker‑free by design, with a built‑in **Shields** network blocker.
 
-> **Not shippable to Google Play.** Duetify streams from YouTube and depends on GPLv3 `NewPipeExtractor`; it is a personal / educational project, not a distributable product.
+> **Not shippable to Google Play.** Music_BG streams from YouTube and depends on GPLv3 `NewPipeExtractor`; it is a personal / educational project, not a distributable product.
 
 ---
 
@@ -43,11 +43,11 @@
 - Roadmap tiles (locked): Tap Duet (rhythm), Doodle Duet.
 
 **Privacy — Shields (no ads, no trackers)**
-- Duetify ships with **zero** ad / analytics / tracking SDKs, and music streaming skips YouTube ads.
+- Music_BG ships with **zero** ad / analytics / tracking SDKs, and music streaming skips YouTube ads.
 - **Shields** (on by default) goes further: an OkHttp interceptor blocks known ad / tracker / analytics hosts across all app traffic, with a **Settings → Privacy** toggle and a live "trackers blocked" count.
 
 **Beyond the phone**
-- **Android Auto** (browse + play), **Wear OS** transport, a **home‑screen widget**, a **Quick Settings tile**, deep links / "Open with" & "Share to Duetify" for YouTube links, and voice "play … on Duetify".
+- **Android Auto** (browse + play), **Wear OS** transport, a **home‑screen widget**, a **Quick Settings tile**, deep links / "Open with" & "Share to Music_BG" for YouTube links, and voice "play … on Music_BG".
 
 **Now Playing** — blurred artwork backdrop, breathing album art, hue‑cycling frosted‑glass play/pause button, animated multi‑hue seek bar, glassy album‑tinted volume, queue, and live lyrics.
 

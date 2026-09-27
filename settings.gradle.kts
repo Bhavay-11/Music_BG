@@ -23,7 +23,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Duetify"
+rootProject.name = "Music_BG"
 include(":app")
 include(":wear")
  
