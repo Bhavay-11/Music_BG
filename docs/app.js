@@ -920,11 +920,13 @@
   const tabs = document.querySelectorAll("#tabs .tab");
   const playView = document.getElementById("playView");
   const musicView = document.getElementById("musicView");
+  const togetherView = document.getElementById("togetherView");
   tabs.forEach((t) => t.addEventListener("click", () => {
     tabs.forEach((x) => x.classList.toggle("on", x === t));
     const tab = t.dataset.tab;
     playView.classList.toggle("active", tab === "play");
     musicView.classList.toggle("active", tab === "music");
+    if (togetherView) togetherView.classList.toggle("active", tab === "together");
   }));
 
   // ---------- music (YouTube embedded player) ----------
@@ -988,6 +990,43 @@
   })();
   renderSaved();
   renderRecent();
+
+  // ---------- Together: group video call (Jitsi) + watch party ----------
+  const togetherTab = () => { const t = document.querySelector('[data-tab="together"]'); if (t) t.click(); };
+  const roomInput = document.getElementById("roomInput");
+  const callStart = document.getElementById("callStart");
+  const callInvite = document.getElementById("callInvite");
+  const jitsiWrap = document.getElementById("jitsiWrap");
+  const wpInput = document.getElementById("wpInput");
+  const wpGo = document.getElementById("wpGo");
+  const wpShare = document.getElementById("wpShare");
+  const wpFrame = document.getElementById("wpFrame");
+  const tMsg = document.getElementById("tMsg");
+  let curRoom = "", wpCur = "";
+  const cleanRoom = (r) => (r || "").replace(/[^A-Za-z0-9_-]/g, "");
+  function startCall(raw) {
+    const r = cleanRoom(raw) || "party" + Math.random().toString(36).slice(2, 7);
+    curRoom = r; jitsiWrap.style.display = "block";
+    jitsiWrap.innerHTML = '<iframe allow="camera; microphone; fullscreen; display-capture; autoplay" src="https://meet.jit.si/MusicBG_' + encodeURIComponent(r) + '#config.prejoinPageEnabled=false"></iframe>';
+  }
+  if (callStart) callStart.addEventListener("click", () => { startCall(roomInput.value); tMsg.textContent = "Room: " + curRoom + " — tap Invite to bring friends."; });
+  if (callInvite) callInvite.addEventListener("click", async () => {
+    if (!curRoom) startCall(roomInput.value);
+    const link = location.origin + location.pathname + "?room=" + encodeURIComponent(curRoom);
+    try { if (navigator.share) await navigator.share({ title: "Join my Music_BG hangout", url: link }); else { await navigator.clipboard.writeText(link); tMsg.textContent = "Invite link copied!"; } } catch (e) { tMsg.textContent = "Invite: " + link; }
+  });
+  function wpLoad(id, start) { wpCur = id; wpFrame.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); }
+  if (wpGo) wpGo.addEventListener("click", () => { const id = ytId(wpInput.value); if (id) wpLoad(id); });
+  if (wpShare) wpShare.addEventListener("click", async () => {
+    if (!wpCur) return; const link = location.origin + location.pathname + "?wp=" + wpCur + "&t=" + Date.now();
+    try { if (navigator.share) await navigator.share({ title: "Watch together on Music_BG", url: link }); else { await navigator.clipboard.writeText(link); tMsg.textContent = "Watch link copied — everyone sees the same spot."; } } catch (e) { tMsg.textContent = "Watch link: " + link; }
+  });
+  (function joinTogether() {
+    const q = new URLSearchParams(location.search);
+    const room = q.get("room"), wp = q.get("wp");
+    if (room) { roomInput.value = cleanRoom(room); startCall(room); togetherTab(); tMsg.textContent = "Joined room " + cleanRoom(room) + " 👥"; }
+    if (wp && /^[A-Za-z0-9_-]{11}$/.test(wp)) { const t = Number(q.get("t")); const el = t ? Math.floor((Date.now() - t) / 1000) : 0; wpLoad(wp, el > 0 && el < 36000 ? el : 0); if (!room) togetherTab(); }
+  })();
   const stations = [
     { e: "🎧", t: "Lofi hip hop radio", d: "beats to relax / study to", id: "jfKfPfyJRdk" },
     { e: "🌆", t: "Synthwave radio", d: "chill retro vibes", id: "4xDzrJKXOOY" },

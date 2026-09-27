@@ -57,6 +57,8 @@
   /* music */
   .ytwrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;margin-top:12px;}
   .ytwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .callwrap{width:100%;height:58vh;min-height:340px;border-radius:16px;overflow:hidden;background:#000;margin-top:12px;}
+  .callwrap iframe{width:100%;height:100%;border:0;}
   .input{width:100%;background:var(--hi);border:none;color:var(--text);border-radius:14px;padding:14px;font-size:15px;margin-top:12px;}
   .station{display:flex;align-items:center;gap:12px;background:var(--card2);border:none;color:var(--text);border-radius:14px;padding:12px 14px;width:100%;margin-top:10px;cursor:pointer;text-align:left;}
   .station .e{font-size:24px;} .station .t{font-weight:700;} .station .d{color:var(--muted);font-size:12px;}
@@ -105,11 +107,33 @@
     <div id="stations"></div>
     <div class="note">Playback uses YouTube's official embedded player, so it works on iPhone, Android and desktop. Full library streaming (search, downloads, background play) lives in the Android app.</div>
   </div>
+
+  <div id="togetherView" class="tabview">
+    <div class="topbar"><h1>Together <span class="sm">Call, chat, watch &amp; play as a group</span></h1></div>
+    <div class="note">Group video call &amp; chat</div>
+    <input class="input" id="roomInput" placeholder="Room name (optional)" />
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="callStart" style="margin-top:0">Start / Join call</button>
+      <button class="btn ghost" id="callInvite" style="margin-top:0;flex:0 0 auto">🔗 Invite</button>
+    </div>
+    <div id="jitsiWrap" class="callwrap" style="display:none"></div>
+    <div class="note">Free group video + voice + chat (Jitsi). Allow camera &amp; mic when prompted.</div>
+    <div class="note">Watch Party</div>
+    <input class="input" id="wpInput" placeholder="Paste a YouTube link to watch together…" />
+    <div class="row" style="margin-top:10px">
+      <button class="btn teal" id="wpGo" style="margin-top:0">Play for everyone</button>
+      <button class="btn ghost" id="wpShare" style="margin-top:0;flex:0 0 auto">🔗 Watch link</button>
+    </div>
+    <div class="ytwrap" id="wpWrap"><iframe id="wpFrame" src="about:blank" allow="autoplay; encrypted-media" allowfullscreen title="watch party"></iframe></div>
+    <div id="tMsg" class="note"></div>
+    <div class="note">Tip: keep the call open, then hop to Play or Music — everyone hangs out together.</div>
+  </div>
 </div>
 
 <nav id="tabs">
   <button class="tab on" data-tab="play"><span class="ti">🎮</span>Play</button>
   <button class="tab" data-tab="music"><span class="ti">♪</span>Music</button>
+  <button class="tab" data-tab="together"><span class="ti">👥</span>Together</button>
 </nav>
 <script src="app.js"></script>
 </body>
