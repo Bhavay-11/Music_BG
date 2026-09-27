@@ -7,7 +7,7 @@
   const subtitle = document.getElementById("subtitle");
   let cleanup = null;
 
-  const H = (html) => { const d = document.createElement("div"); d.innerHTML = html; return d; };
+  const hEl = (html) => { const d = document.createElement("div"); d.innerHTML = html; return d; };
 
   function showHub() {
     if (cleanup) { cleanup(); cleanup = null; }
@@ -193,7 +193,7 @@
         const won = deck.every(c => c.done); st.textContent = won ? `Solved in ${moves} moves! 🎉` : `Moves: ${moves}`; }
       function tap(i) { if (busy) return; const c = deck[i]; if (c.up || c.done) return; c.up = true; draw();
         if (first === null) { first = i; } else { moves++; if (deck[first].e === c.e) { deck[first].done = c.done = true; first = null; draw(); }
-          else { busy = true; setTimeout(() => { deck[first].up = c.up = false; first = null; busy = false; draw(); }, 700); } } }
+          else { busy = true; const a = first, b = i; setTimeout(() => { if (deck[a]) deck[a].up = false; if (deck[b]) deck[b].up = false; first = null; busy = false; draw(); }, 700); } } }
       s.append(st, board, btn); draw();
     }});
 
@@ -213,7 +213,7 @@
         else if (phase === "go") { const ms = Math.round(performance.now() - t0); if (!best || ms < best) best = ms; phase = "result"; set("#2a2440", ms + " ms", "tap to retry"); st.textContent = "Best: " + best + " ms"; }
       };
       st.textContent = "Beat your best reaction time";
-      s.append(st, zone, H('<div class="note">Couple mode: pass the phone and see who is quicker.</div>'));
+      s.append(st, zone, hEl('<div class="note">Couple mode: pass the phone and see who is quicker.</div>'));
       return () => clearTimeout(timer);
     }});
 
@@ -273,7 +273,7 @@
       function draw(){ cells.forEach((c,i)=>{ c.textContent=g[i]||""; c.style.background=colors[g[i]]||"#f7e463"; c.style.color=g[i]<=4?"var(--muted)":"#1a1030"; });
         if(!movesLeft())Store.submitBest("g2048",score); st.textContent = movesLeft()? "Score: "+score : "Game over · "+score; }
       swipe(board,move);
-      const dpad=H(`<div class="dpad"><div></div><button class="dbtn" data-d="up">▲</button><div></div>
+      const dpad=hEl(`<div class="dpad"><div></div><button class="dbtn" data-d="up">▲</button><div></div>
         <button class="dbtn" data-d="left">◀</button><div></div><button class="dbtn" data-d="right">▶</button>
         <div></div><button class="dbtn" data-d="down">▼</button><div></div></div>`).firstChild;
       dpad.querySelectorAll(".dbtn").forEach(b=>b.onclick=()=>move(b.dataset.d));
@@ -298,7 +298,7 @@
       function turn(nd){ const opp={up:"down",down:"up",left:"right",right:"left"}; if(nd===opp[d])return; d=nd; }
       function start(){ snake=[Math.floor(N*N/2)]; d="right"; food=Math.floor(N*N/2)+3; over=false; score=0; run=true; clearInterval(loop); loop=setInterval(tick,170); draw(); }
       swipe(board,turn);
-      const dpad=H(`<div class="dpad"><div></div><button class="dbtn" data-d="up">▲</button><div></div>
+      const dpad=hEl(`<div class="dpad"><div></div><button class="dbtn" data-d="up">▲</button><div></div>
         <button class="dbtn" data-d="left">◀</button><div></div><button class="dbtn" data-d="right">▶</button>
         <div></div><button class="dbtn" data-d="down">▼</button><div></div></div>`).firstChild;
       dpad.querySelectorAll(".dbtn").forEach(b=>b.onclick=()=>turn(b.dataset.d));
@@ -329,7 +329,7 @@
         const bb=mk("button","tapzone"); bb.style.background="var(--coral)"; bb.textContent=d[1];
         a.onclick=bb.onclick=()=>{ if(picked)return; picked=true; ans++; i++; setTimeout(round,150); };
         wrap.append(a,orr,bb); }
-      s.append(st,wrap,H('<div class="note">Great for two — debate it, then tap one to move on.</div>')); round(); }});
+      s.append(st,wrap,hEl('<div class="note">Great for two — debate it, then tap one to move on.</div>')); round(); }});
 
   // ---- Higher or Lower ----
   games.push({ id:"hilo", name:"Higher or Lower", tag:"Guess the secret number", emoji:"🔢", color:"#e5484d",
@@ -364,7 +364,7 @@
       const st=mk("div","status"); const card=mk("div","card"); card.style.minHeight="180px";
       function show(){ card.innerHTML=""; st.textContent=`Card ${i+1}`; card.append(mk("div","center","",), mk("div","center big",cfg.emoji)); const q=mk("div","status",(cfg.prefix||"")+cfg.cards[order[i%order.length]]); q.style.textAlign="center"; q.style.fontWeight="700"; card.append(q); }
       const b=mk("button","btn","Next"); b.onclick=()=>{ i++; if(i%order.length===0) order=shuffle(order); show(); };
-      s.append(st,card,b,H(`<div class="note">${cfg.note}</div>`)); show();
+      s.append(st,card,b,hEl(`<div class="note">${cfg.note}</div>`)); show();
     }}); }
 
   deckGame({ id:"nhie", name:"Never Have I Ever", tag:"Reveal & confess · 2P", emoji:"🙈", color:"#b06bff", prefix:"Never have I ever ",
@@ -392,7 +392,7 @@
       function render2(){ st.textContent=`Player ${player}'s turn`; card.innerHTML="";
         if(prompt===null){ seg.style.display=""; next.style.display="none"; card.append(mk("div","center","",),mk("div","center","Pick Truth or Dare")); }
         else { seg.style.display="none"; next.style.display=""; card.append(mk("div","center",isT?"TRUTH":"DARE"),(()=>{const q=mk("div","status",prompt);q.style.textAlign="center";return q;})()); } }
-      s.append(st,card,seg,next,H('<div class="note">Pass-and-play on one phone.</div>')); render2();
+      s.append(st,card,seg,next,hEl('<div class="note">Pass-and-play on one phone.</div>')); render2();
     }});
 
   // ---- Reversi ----
@@ -438,7 +438,7 @@
       window.addEventListener("pointerup",()=>{ drawing=false; });
       const pal=mk("div","row"); pal.style.marginTop="10px"; ["#e5484d","#2fbf71","#4c7df0","#f2c14e","#111111","#b06bff"].forEach(col=>{ const b=mk("button"); b.style.flex="1"; b.style.height="40px"; b.style.border="none"; b.style.borderRadius="10px"; b.style.background=col; b.onclick=()=>{cur=col;}; pal.appendChild(b); });
       const clr=mk("button","btn ghost","Clear"); clr.onclick=()=>{ if(ctx)ctx.clearRect(0,0,cv.width,cv.height); };
-      s.append(mk("div","status","Draw together"), cv, pal, clr, H('<div class="note">Both of you can draw — huddle up or pass the phone.</div>'));
+      s.append(mk("div","status","Draw together"), cv, pal, clr, hEl('<div class="note">Both of you can draw — huddle up or pass the phone.</div>'));
     }});
 
   // ---- Air Hockey (neon, 2 players, multitouch) ----
@@ -477,7 +477,7 @@
       }
       function score(){ st.textContent=s1+"  —  "+s2+"  · first to 7"; FX.buzz(); FX.haptic(20); serve(s1>s2?1:-1); }
       serve(1); step();
-      s.append(H('<div class="note">Player 1 drags the red paddle (bottom), Player 2 the blue (top). It\'s multi-touch — play at the same time.</div>'));
+      s.append(hEl('<div class="note">Player 1 drags the red paddle (bottom), Player 2 the blue (top). It\'s multi-touch — play at the same time.</div>'));
       return ()=>{ over=true; cancelAnimationFrame(raf); };
     }});
 
@@ -504,7 +504,7 @@
       }
       function restart(){ notes=[];score=0;combo=0;life=5;spawnT=0;over=false; }
       step();
-      s.append(H('<div class="note">Tap a column the moment its tile hits the white line. Keep the combo alive!</div>'));
+      s.append(hEl('<div class="note">Tap a column the moment its tile hits the white line. Keep the combo alive!</div>'));
       return ()=>cancelAnimationFrame(raf);
     }});
 
@@ -530,7 +530,7 @@
         raf=requestAnimationFrame(step);
       }
       step();
-      s.append(H('<div class="note">Tap bubbles before they float away. How many can you pop in 30s?</div>'));
+      s.append(hEl('<div class="note">Tap bubbles before they float away. How many can you pop in 30s?</div>'));
       return ()=>cancelAnimationFrame(raf);
     }});
 
@@ -564,7 +564,7 @@
         raf=requestAnimationFrame(step);
       }
       step();
-      s.append(H('<div class="note">Drag to move the paddle, tap to launch. Break all the bricks!</div>'));
+      s.append(hEl('<div class="note">Drag to move the paddle, tap to launch. Break all the bricks!</div>'));
       return ()=>cancelAnimationFrame(raf);
     }});
 
@@ -693,7 +693,7 @@
         if(s1>=7||s2>=7){over=true;st.textContent=(s1>=7?"Bottom player wins!":"Top player wins!")+" 🎉";FX.win();return;}
         raf=requestAnimationFrame(step); }
       step();
-      s.append(H('<div class="note">Top &amp; bottom players each drag their paddle. First to 7 — multi-touch.</div>'));
+      s.append(hEl('<div class="note">Top &amp; bottom players each drag their paddle. First to 7 — multi-touch.</div>'));
       return ()=>{over=true;cancelAnimationFrame(raf);};
     }});
 
@@ -720,7 +720,7 @@
         st.textContent = done()? (s1>s2?`Player 1 wins ${s1}–${s2}! 🎉`:s2>s1?`Player 2 wins ${s2}–${s1}! 🎉`:`Tie ${s1}–${s2}`) : `P1 ${s1} · P2 ${s2} · Player ${turn}'s turn`; }
       const btn=mk("button","btn","New game"); btn.onclick=()=>{hE={};vE={};owner={};turn=1;draw();};
       s.appendChild(btn); draw();
-      s.append(H('<div class="note">Tap between two dots to draw a line. Close a box to score and go again.</div>'));
+      s.append(hEl('<div class="note">Tap between two dots to draw a line. Close a box to score and go again.</div>'));
     }});
 
   // ---- Splash Duel (live territory paint, 2P) — original ----
@@ -740,7 +740,7 @@
         if(over){ ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 20px sans-serif";ctx.fillText("tap to rematch",W/2,H/2); }
         raf=requestAnimationFrame(step); }
       step();
-      s.append(H('<div class="note">Bottom player is 🔴, top is 🔵. Smear your colour across the grid — most tiles when time runs out wins. Multi-touch, play at once!</div>'));
+      s.append(hEl('<div class="note">Bottom player is 🔴, top is 🔵. Smear your colour across the grid — most tiles when time runs out wins. Multi-touch, play at once!</div>'));
       return ()=>cancelAnimationFrame(raf);
     }});
 
@@ -764,7 +764,7 @@
         if(!round){ ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 20px sans-serif";ctx.fillText("tap to rematch",cx,cy); }
         raf=requestAnimationFrame(step); }
       step();
-      s.append(H('<div class="note">Drag your disc (🔴 bottom, 🔵 top), build speed, and slam your rival out of the ring. Multi-touch.</div>'));
+      s.append(hEl('<div class="note">Drag your disc (🔴 bottom, 🔵 top), build speed, and slam your rival out of the ring. Multi-touch.</div>'));
       return ()=>cancelAnimationFrame(raf);
     }});
 
@@ -783,7 +783,7 @@
         if(phase==="go"){ endRound(p,false); FX.pop(); return; } }
       z1.addEventListener("click",()=>tap(1)); z2.addEventListener("click",()=>tap(2));
       z2.textContent="Player 2 (top)"; z1.textContent="Player 1 (bottom)"; st.textContent="🔵 0   🔴 0"; col("#2a2440","Tap either side to start · first to 5");
-      s.append(st,z2,mid,z1,H('<div class="note">When both panels turn GREEN, be first to tap YOUR side. Tap early and your rival scores. First to 5 wins.</div>'));
+      s.append(st,z2,mid,z1,hEl('<div class="note">When both panels turn GREEN, be first to tap YOUR side. Tap early and your rival scores. First to 5 wins.</div>'));
       return ()=>clearTimeout(timer);
     }});
 
