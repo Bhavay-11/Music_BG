@@ -1075,7 +1075,24 @@
     searchEl.addEventListener("keydown", (e) => { if (e.key === "Enter") search((searchEl.value || "").trim()); });
     trendBtn.addEventListener("click", trending);
     watchBtn.addEventListener("click", () => renderGrid(watchlist(), "★ Your watchlist"));
-    ownPlay.addEventListener("click", () => { const u = (ownUrl.value || "").trim(); if (!u) return; ownVideo.style.display = "block"; ownVideo.src = u; if (ownVideo.play) ownVideo.play().catch(() => {}); });
+    let hls = null;
+    function loadHls() { return new Promise((res) => { if (window.Hls) return res(window.Hls); const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/hls.js@1"; s.onload = () => res(window.Hls); s.onerror = () => res(null); document.head.appendChild(s); }); }
+    ownPlay.addEventListener("click", async () => {
+      const u = (ownUrl.value || "").trim(); if (!u) return;
+      ownVideo.style.display = "block";
+      if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+      const isHls = /\.m3u8(\?|$)/i.test(u);
+      const nativeHls = ownVideo.canPlayType && ownVideo.canPlayType("application/vnd.apple.mpegurl");
+      if (isHls && !nativeHls) {
+        const Hls = await loadHls();
+        if (Hls && Hls.isSupported()) {
+          hls = new Hls(); hls.loadSource(u); hls.attachMedia(ownVideo);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { if (ownVideo.play) ownVideo.play().catch(() => {}); });
+          return;
+        }
+      }
+      ownVideo.src = u; if (ownVideo.play) ownVideo.play().catch(() => {});
+    });
     if (key) trending();
   })();
   const stations = [
