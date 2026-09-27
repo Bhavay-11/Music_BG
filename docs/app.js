@@ -14,6 +14,7 @@
     stage.classList.remove("active"); stage.innerHTML = "";
     hub.classList.add("active");
     backBtn.classList.remove("show");
+    document.body.classList.remove("in-game");
     subtitle.textContent = "Play together — near or far";
     document.title = "Music_BG · Play";
   }
@@ -22,8 +23,10 @@
     hub.classList.remove("active");
     stage.innerHTML = ""; stage.classList.add("active");
     backBtn.classList.add("show");
+    document.body.classList.add("in-game");
     subtitle.textContent = g.tag;
     cleanup = g.render(stage) || null;
+    window.scrollTo(0, 0);
   }
   backBtn.onclick = showHub;
 
@@ -261,14 +264,114 @@
       s.append(st,board,btn); draw();
       return ()=>{clearInterval(t1);clearTimeout(t2);}; }});
 
+  // ---- deck-cycler helper for conversation games ----
+  function deckGame(cfg){ games.push({ id:cfg.id, name:cfg.name, tag:cfg.tag, emoji:cfg.emoji, color:cfg.color, cat:"Conversation",
+    render(s){ let order=shuffle(cfg.cards.map((_,i)=>i)), i=0;
+      const st=mk("div","status"); const card=mk("div","card"); card.style.minHeight="180px";
+      function show(){ card.innerHTML=""; st.textContent=`Card ${i+1}`; card.append(mk("div","center","",), mk("div","center big",cfg.emoji)); const q=mk("div","status",(cfg.prefix||"")+cfg.cards[order[i%order.length]]); q.style.textAlign="center"; q.style.fontWeight="700"; card.append(q); }
+      const b=mk("button","btn","Next"); b.onclick=()=>{ i++; if(i%order.length===0) order=shuffle(order); show(); };
+      s.append(st,card,b,H(`<div class="note">${cfg.note}</div>`)); show();
+    }}); }
+
+  deckGame({ id:"nhie", name:"Never Have I Ever", tag:"Reveal & confess · 2P", emoji:"🙈", color:"#b06bff", prefix:"Never have I ever ",
+    cards:["fallen asleep on a date","texted the wrong person something awkward","stalked an ex online","pretended to love a gift","had dessert for breakfast","sung loudly in the shower","re-gifted a present","had a crush on a friend’s partner","cried at a wedding","danced alone in my room","ghosted someone","faked being sick to skip plans"],
+    note:"Take turns reading aloud. If you have — spill the story!" });
+
+  deckGame({ id:"daily", name:"Daily Questions", tag:"One question a day, together", emoji:"💬", color:"#2fbf71", prefix:"",
+    cards:["What made you smile today?","What’s a tiny thing I do that you love?","Where should we travel next?","What’s your favourite memory of us?","What are you grateful for right now?","If we had a free day tomorrow, what would we do?","What song matches your mood today?","What’s something new you want to try together?","What did you daydream about today?","When did you last feel really proud of me?","What’s your comfort meal this week?","What’s one thing on your mind right now?"],
+    note:"Trade answers — no wrong replies, just talk." });
+
+  deckGame({ id:"pillow", name:"Pillow Talk", tag:"Deeper questions for two", emoji:"🌙", color:"#e5484d", prefix:"",
+    cards:["What first made you fall for me?","What does a perfect lazy day look like for us?","What’s a dream you haven’t told anyone?","How do you like to be comforted on a bad day?","What’s something you want us to do more of?","What are you most looking forward to with us?","What’s a fear you’ve been carrying?","What made you feel loved this week?","Where do you see us in five years?","What’s a small promise we can make tonight?"],
+    note:"Lights low, phones down, just the two of you." });
+
+  // ---- Truth or Dare ----
+  games.push({ id:"tod", name:"Truth or Dare", tag:"Take turns · 2P", emoji:"🔥", color:"#e5484d", cat:"Conversation",
+    render(s){ const T=["What was your first impression of me?","What’s something you’ve never told me?","What’s your favourite thing about us?","When did you feel closest to me?","What’s a secret talent of yours?","What’s on your bucket list?"];
+      const D=["Send a voice note singing our song","Do your best impression of me","Text a compliment to the last person you messaged","Do a 15-second happy dance","Talk in an accent until your next turn","Give a dramatic toast to the other player"];
+      let player=1, prompt=null, isT=true;
+      const st=mk("div","status"); const card=mk("div","card"); card.style.minHeight="150px";
+      const seg=mk("div","seg"); const t=mk("button","opt","Truth"); t.style.background="var(--lav)"; const d=mk("button","opt","Dare"); d.style.background="var(--coral)";
+      const next=mk("button","btn","Done — next player"); next.style.display="none";
+      t.onclick=()=>pick(true); d.onclick=()=>pick(false); next.onclick=()=>{ player=player===1?2:1; prompt=null; render2(); };
+      function pick(truth){ isT=truth; const arr=truth?T:D; prompt=arr[rnd(arr.length)]; render2(); }
+      function render2(){ st.textContent=`Player ${player}'s turn`; card.innerHTML="";
+        if(prompt===null){ seg.style.display=""; next.style.display="none"; card.append(mk("div","center","",),mk("div","center","Pick Truth or Dare")); }
+        else { seg.style.display="none"; next.style.display=""; card.append(mk("div","center",isT?"TRUTH":"DARE"),(()=>{const q=mk("div","status",prompt);q.style.textAlign="center";return q;})()); } }
+      s.append(st,card,seg,next,H('<div class="note">Pass-and-play on one phone.</div>')); render2();
+    }});
+
+  // ---- Reversi ----
+  games.push({ id:"reversi", name:"Reversi", tag:"Flank & flip · 2P", emoji:"⚪", color:"#2fbf71", cat:"Competitive",
+    render(s){ const N=8; const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      let b; function init(){ b=Array(N*N).fill(""); b[27]="W";b[28]="B";b[35]="B";b[36]="W"; turn="B"; }
+      let turn="B";
+      function flips(bd,idx,p){ if(bd[idx])return[]; const r=Math.floor(idx/N),c=idx%N,opp=p==="B"?"W":"B",out=[];
+        for(const [dr,dc] of DIRS){ const line=[]; let nr=r+dr,nc=c+dc; while(nr>=0&&nr<N&&nc>=0&&nc<N&&bd[nr*N+nc]===opp){line.push(nr*N+nc);nr+=dr;nc+=dc;} if(line.length&&nr>=0&&nr<N&&nc>=0&&nc<N&&bd[nr*N+nc]===p)out.push(...line);} return out; }
+      function moves(bd,p){ const m=[]; for(let i=0;i<N*N;i++) if(flips(bd,i,p).length) m.push(i); return m; }
+      init();
+      const st=mk("div","status"); const board=mk("div","board"); board.style.gridTemplateColumns=`repeat(${N},1fr)`; board.style.background="#1e6b4f"; board.style.padding="4px"; board.style.borderRadius="10px";
+      const cells=[]; for(let i=0;i<N*N;i++){ const c=mk("button","cell"); c.style.background="#2a8f6b"; c.style.borderRadius="4px"; c.style.fontSize="0"; c.onclick=()=>play(i); board.appendChild(c); cells.push(c); }
+      function draw(){ cells.forEach((c,i)=>{ c.innerHTML=""; if(b[i]){ const d=document.createElement("div"); d.style.width="72%"; d.style.height="72%"; d.style.margin="14% auto"; d.style.borderRadius="50%"; d.style.background=b[i]==="B"?"var(--text)":"var(--coral)"; c.appendChild(d);} });
+        const cb=b.filter(v=>v==="B").length, cw=b.filter(v=>v==="W").length, mB=moves(b,"B").length, mW=moves(b,"W").length;
+        st.textContent=(!mB&&!mW)?(cb>cw?`Dark wins ${cb}–${cw}!`:cw>cb?`Coral wins ${cw}–${cb}!`:"Tie!"):`● ${cb}  ○ ${cw} · ${turn==="B"?"Dark":"Coral"} to move`; }
+      function play(i){ const f=flips(b,i,turn); if(!f.length)return; b[i]=turn; f.forEach(x=>b[x]=turn); const nx=turn==="B"?"W":"B"; turn=moves(b,nx).length?nx:turn; draw(); }
+      const btn=mk("button","btn","New game"); btn.onclick=()=>{ init(); draw(); };
+      s.append(st,board,btn); draw();
+    }});
+
+  // ---- Tap War ----
+  games.push({ id:"tapwar", name:"Tap War", tag:"Fastest thumb wins · 2P", emoji:"👊", color:"#e5484d", cat:"Competitive",
+    render(s){ const GOAL=30; let p1=0,p2=0,over=false;
+      const st=mk("div","status"); st.textContent="First to "+GOAL+" taps wins";
+      const z2=mk("button","tapzone"); z2.style.background="var(--teal)";
+      const mid=mk("div","center","VS"); mid.style.color="var(--muted)"; mid.style.margin="8px 0";
+      const z1=mk("button","tapzone"); z1.style.background="var(--coral)";
+      function upd(){ z1.textContent="Player 1 · "+p1; z2.textContent="Player 2 · "+p2; if(!over){ if(p1>=GOAL){over=true;st.textContent="Player 1 wins! 🎉";} else if(p2>=GOAL){over=true;st.textContent="Player 2 wins! 🎉";} } }
+      z1.onclick=()=>{ if(!over){p1++;upd();} }; z2.onclick=()=>{ if(!over){p2++;upd();} };
+      const btn=mk("button","btn ghost","Reset"); btn.onclick=()=>{ p1=0;p2=0;over=false; st.textContent="First to "+GOAL+" taps wins"; upd(); };
+      s.append(st,z2,mid,z1,btn); upd();
+    }});
+
+  // ---- Doodle Together ----
+  games.push({ id:"doodle", name:"Doodle Together", tag:"One shared canvas", emoji:"🎨", color:"#b06bff", cat:"Co-op",
+    render(s){ const cv=document.createElement("canvas"); cv.width=600; cv.height=600; cv.style.width="100%"; cv.style.background="#fff"; cv.style.borderRadius="14px"; cv.style.touchAction="none";
+      const ctx=cv.getContext("2d"); if(ctx){ ctx.lineWidth=8; ctx.lineCap="round"; ctx.lineJoin="round"; }
+      let cur="#e5484d", drawing=false, last=null;
+      const P=(e)=>{ const r=cv.getBoundingClientRect(); const t=(e.touches&&e.touches[0])||e; return { x:(t.clientX-r.left)/r.width*cv.width, y:(t.clientY-r.top)/r.height*cv.height }; };
+      cv.addEventListener("pointerdown",(e)=>{ if(!ctx)return; drawing=true; last=P(e); });
+      cv.addEventListener("pointermove",(e)=>{ if(!ctx||!drawing)return; const p=P(e); ctx.strokeStyle=cur; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; });
+      window.addEventListener("pointerup",()=>{ drawing=false; });
+      const pal=mk("div","row"); pal.style.marginTop="10px"; ["#e5484d","#2fbf71","#4c7df0","#f2c14e","#111111","#b06bff"].forEach(col=>{ const b=mk("button"); b.style.flex="1"; b.style.height="40px"; b.style.border="none"; b.style.borderRadius="10px"; b.style.background=col; b.onclick=()=>{cur=col;}; pal.appendChild(b); });
+      const clr=mk("button","btn ghost","Clear"); clr.onclick=()=>{ if(ctx)ctx.clearRect(0,0,cv.width,cv.height); };
+      s.append(mk("div","status","Draw together"), cv, pal, clr, H('<div class="note">Both of you can draw — huddle up or pass the phone.</div>'));
+    }});
+
   function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 
-  // ---------- build hub ----------
-  games.forEach(g => {
+  // ---------- build hub (grouped into Kulfi-style categories) ----------
+  const CAT = { ttt:"Competitive", c4:"Competitive", gomoku:"Competitive", reversi:"Competitive",
+    rps:"Competitive", rx:"Competitive", tapwar:"Competitive", whack:"Competitive", hilo:"Competitive",
+    mem:"Solo & Puzzle", g2048:"Solo & Puzzle", snake:"Solo & Puzzle",
+    tot:"Conversation", wyr:"Conversation" };
+  const ORDER = ["Conversation", "Competitive", "Co-op", "Solo & Puzzle", "More"];
+  const catOf = (g) => g.cat || CAT[g.id] || "More";
+  grid.className = ""; // it now holds category sections, each with its own sub-grid
+  function tileFor(g) {
     const t = mk("button", "tile"); t.onclick = () => openGame(g);
     const ic = mk("div", "ic", g.emoji); ic.style.background = g.color;
     const body = mk("div"); body.append(mk("div", "nm", g.name), mk("div", "tg", g.tag));
-    t.append(ic, body); grid.appendChild(t);
+    t.append(ic, body); return t;
+  }
+  ORDER.forEach((cat) => {
+    const list = games.filter((g) => catOf(g) === cat);
+    if (!list.length) return;
+    const head = mk("div", null, cat);
+    head.style.cssText = "font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:18px 4px 12px;";
+    grid.appendChild(head);
+    const sub = mk("div", "grid");
+    list.forEach((g) => sub.appendChild(tileFor(g)));
+    grid.appendChild(sub);
   });
 
   // ---------- tabs (Play / Music) ----------
@@ -301,6 +404,19 @@
     b.addEventListener("click", () => loadYt(s.id));
     stEl.appendChild(b);
   });
+
+  // ---------- iOS install hint ----------
+  (function iosHint() {
+    const hint = document.getElementById("iosHint");
+    if (!hint) return;
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const standalone = window.navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    if (isIOS && !standalone && localStorage.getItem("iosHintDismissed") !== "1") hint.style.display = "block";
+    const x = document.getElementById("iosHintX");
+    if (x) x.addEventListener("click", () => { hint.style.display = "none"; localStorage.setItem("iosHintDismissed", "1"); });
+  })();
 
   // service worker for offline / installable
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

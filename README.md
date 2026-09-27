@@ -4,7 +4,19 @@
 
 > **Not shippable to Google Play.** Music_BG streams from YouTube and depends on GPLv3 `NewPipeExtractor`; it is a personal / educational project, not a distributable product.
 
-**▶ Play the games in any browser (iPhone, Android, desktop):** https://bhavay-11.github.io/Music_BG/ — a Progressive Web App (installable to your home screen), no App Store needed. **Android APK:** see [Releases](https://github.com/Bhavay-11/Music_BG/releases).
+## 📲 Install
+
+**▶ Play now (any device):** **https://bhavay-11.github.io/Music_BG/**
+
+**iPhone / iPad (iOS):** open the link above in **Safari** → tap **Share** (□↑) → **Add to Home Screen** → **Add**. It installs like a native app — full-screen, offline-capable, its own icon. No App Store, no Apple account.
+
+**Android:**
+- **Full app (music + 40 games):** download the APK → [**Music_BG-v2.0.2.apk**](https://github.com/Bhavay-11/Music_BG/releases/download/v2.0.2/Music_BG-v2.0.2.apk) (enable "install unknown apps", then tap it).
+- **Or the web app:** open the link above in Chrome → menu → **Install app**.
+
+**Desktop:** just open the link in any browser (Chrome/Edge show an install icon in the address bar).
+
+> The web app (PWA) covers the games + an embedded music player and runs everywhere including iOS. The Android APK additionally has full YouTube streaming, downloads and background play. A native SwiftUI iOS project is in [`ios/`](ios/) for building on a Mac.
 
 ---
 

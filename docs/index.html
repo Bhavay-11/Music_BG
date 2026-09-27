@@ -65,9 +65,16 @@
     background:linear-gradient(to top, rgba(15,13,23,.98), rgba(15,13,23,.85) 70%, rgba(15,13,23,0));backdrop-filter:blur(12px);}
   .tab{flex:1;max-width:180px;background:transparent;border:none;color:var(--muted);border-radius:16px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
   .tab .ti{font-size:22px;} .tab.on{color:var(--coral);background:rgba(229,72,77,.14);}
+  /* Inside a game, hide the bottom bar so game controls aren't blocked (return via the ‹ back arrow). */
+  body.in-game #tabs{display:none;}
+  body.in-game #app{padding-bottom:calc(28px + var(--safe-bottom));}
 </style>
 </head>
 <body>
+<div id="iosHint" style="display:none;position:sticky;top:0;z-index:20;margin:0 0 6px;padding:10px 14px;background:rgba(229,72,77,.16);border:1px solid rgba(229,72,77,.4);border-radius:14px;font-size:13px;color:var(--text);">
+  <b>Install on your iPhone:</b> tap <b>Share</b> (the □↑ button) then <b>“Add to Home Screen”</b>.
+  <button id="iosHintX" style="float:right;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+</div>
 <div id="app">
   <div id="playView" class="tabview active">
     <div class="topbar">
