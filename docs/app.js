@@ -1092,8 +1092,7 @@
       ownWrap.appendChild(v); ownWrap.style.display = "flex";
       return v;
     }
-    ownPlay.addEventListener("click", async () => {
-      const u = (ownUrl.value || "").trim();
+    async function playUrl(u) {
       if (!u) return log("Enter a direct .m3u8, .mp4 or .webm URL you own.", true);
       if (!/^https?:\/\//i.test(u)) return log("Only http(s) URLs are supported (no magnet / P2P links).", true);
       const video = resetPlayer();
@@ -1114,8 +1113,55 @@
       video.src = u;
       safePlay(video);
       log(isHls ? "Native HLS loaded." : "Direct file loaded.");
-    });
+    }
+    ownPlay.addEventListener("click", () => playUrl((ownUrl.value || "").trim()));
     if (ownStop) ownStop.addEventListener("click", () => { if (hls) { try { hls.destroy(); } catch (e) {} hls = null; } ownWrap.innerHTML = ""; ownWrap.style.display = "none"; log("Stopped."); });
+
+    // ---- Internet Archive: free public-domain films, no API key (works for every user) ----
+    const iaSearch = document.getElementById("iaSearch"), iaSearchBtn = document.getElementById("iaSearchBtn"), iaPopular = document.getElementById("iaPopular"), iaHead = document.getElementById("iaHead"), iaGrid = document.getElementById("iaGrid");
+    const iaImg = (id) => "https://archive.org/services/img/" + id;
+    async function iaJson(url) { if (typeof fetch !== "function") return null; const r = await fetch(url); if (!r.ok) throw new Error("IA " + r.status); return r.json(); }
+    function iaRender(docs, label) {
+      iaHead.textContent = label || ""; iaGrid.innerHTML = "";
+      if (!docs || !docs.length) { iaHead.textContent = (label || "") + " — nothing found."; return; }
+      docs.forEach((d) => {
+        const c = mk("button", "pc"); const yr = d.year ? (" · " + d.year) : "";
+        c.innerHTML = `<img src="${iaImg(d.identifier)}" alt="" loading="lazy">` + `<div class="pt">${d.title || d.identifier}</div><div class="pr">▶ play${yr}</div>`;
+        c.addEventListener("click", () => iaPlay(d.identifier, d.title)); iaGrid.appendChild(c);
+      });
+    }
+    async function iaQuery(q, label) {
+      if (typeof fetch !== "function") return;
+      try {
+        iaHead.textContent = "Loading…";
+        const url = "https://archive.org/advancedsearch.php?q=" + encodeURIComponent(q) + "&fl[]=identifier&fl[]=title&fl[]=year&sort[]=downloads+desc&rows=36&page=1&output=json";
+        const d = await iaJson(url);
+        iaRender((d && d.response && d.response.docs) || [], label);
+      } catch (e) { iaHead.textContent = "Couldn't reach the Internet Archive right now."; }
+    }
+    function archiveBrowse(q) { if (q) iaQuery("mediatype:movies AND (" + q + ")", 'Results for "' + q + '"'); else iaQuery("collection:feature_films AND mediatype:movies", "🎞️ Popular free feature films"); }
+    async function iaPlay(id, title) {
+      if (typeof fetch !== "function") return;
+      try {
+        log("Finding a playable file for " + (title || id) + "…");
+        const meta = await iaJson("https://archive.org/metadata/" + id);
+        const files = (meta && meta.files) || [];
+        const pick = files.find((f) => /\.mp4$/i.test(f.name) && /(512kb|h\.?264|mpeg4|mp4)/i.test((f.format || "") + f.name)) || files.find((f) => /\.mp4$/i.test(f.name)) || files.find((f) => /\.(webm|ogv)$/i.test(f.name));
+        if (!pick) { log("No web-playable file in this title — try another.", true); return; }
+        const src = "https://archive.org/download/" + id + "/" + encodeURIComponent(pick.name);
+        if (ownUrl) ownUrl.value = src;
+        playUrl(src);
+        if (ownWrap && ownWrap.scrollIntoView) ownWrap.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (e) { log("Couldn't load that film — try another.", true); }
+    }
+    if (iaSearchBtn) iaSearchBtn.addEventListener("click", () => archiveBrowse((iaSearch.value || "").trim()));
+    if (iaSearch) iaSearch.addEventListener("keydown", (e) => { if (e.key === "Enter") archiveBrowse((iaSearch.value || "").trim()); });
+    if (iaPopular) iaPopular.addEventListener("click", () => archiveBrowse(""));
+    // Lazy-load popular free films the first time the Movies tab is opened.
+    let iaLoaded = false;
+    const moviesTabBtn = document.querySelector('[data-tab="movies"]');
+    if (moviesTabBtn) moviesTabBtn.addEventListener("click", () => { if (!iaLoaded) { iaLoaded = true; archiveBrowse(""); } });
+
     if (key) trending();
   })();
   const stations = [

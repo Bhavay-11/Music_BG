@@ -152,7 +152,15 @@
       <div id="ownStatus" class="console">Awaiting input…</div>
       <div id="ownWrap" class="playerwrap" style="display:none"></div>
     </div>
-    <div class="note" style="margin-top:24px;opacity:.75">— Optional: browse &amp; track a movie catalog —</div>
+    <div class="note" style="margin-top:24px"><b>🎞️ Free films — Internet Archive</b> · public-domain, no key, plays in the player above.</div>
+    <input class="input" id="iaSearch" placeholder="Search free films… (e.g. Chaplin, noir, sci-fi, cartoons)" />
+    <div class="row" style="margin-top:8px;flex-wrap:wrap">
+      <button class="btn" id="iaSearchBtn" style="margin-top:0">Search</button>
+      <button class="btn ghost" id="iaPopular" style="margin-top:0;flex:0 0 auto">🔥 Popular</button>
+    </div>
+    <div id="iaHead" class="note"></div>
+    <div id="iaGrid" class="pgrid"></div>
+    <div class="note" style="margin-top:24px;opacity:.75">— Optional: also browse &amp; track the full catalog (needs a free TMDB key) —</div>
     <div id="tmdbGate">
       <div class="note">Paste a free <b>TMDB API key</b> (themoviedb.org → Settings → API → API Read Access / v3 key) to search &amp; track titles. Optional — the player above works without it. Stored only on this device.</div>
       <input class="input" id="tmdbKey" placeholder="TMDB API key (optional)" />
