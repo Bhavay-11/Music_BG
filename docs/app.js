@@ -927,6 +927,7 @@
     playView.classList.toggle("active", tab === "play");
     musicView.classList.toggle("active", tab === "music");
     if (togetherView) togetherView.classList.toggle("active", tab === "together");
+    const mv = document.getElementById("moviesView"); if (mv) mv.classList.toggle("active", tab === "movies");
   }));
 
   // ---------- music (YouTube embedded player) ----------
@@ -1026,6 +1027,56 @@
     const room = q.get("room"), wp = q.get("wp");
     if (room) { roomInput.value = cleanRoom(room); startCall(room); togetherTab(); tMsg.textContent = "Joined room " + cleanRoom(room) + " 👥"; }
     if (wp && /^[A-Za-z0-9_-]{11}$/.test(wp)) { const t = Number(q.get("t")); const el = t ? Math.floor((Date.now() - t) / 1000) : 0; wpLoad(wp, el > 0 && el < 36000 ? el : 0); if (!room) togetherTab(); }
+  })();
+
+  // ---------- Movies: TMDB catalog + watchlist + your-own-file player ----------
+  (function movies() {
+    const gate = document.getElementById("tmdbGate"), appEl = document.getElementById("tmdbApp");
+    if (!gate) return;
+    const keyInput = document.getElementById("tmdbKey"), keySave = document.getElementById("tmdbSave");
+    const searchEl = document.getElementById("movieSearch"), searchBtn = document.getElementById("movieSearchBtn");
+    const trendBtn = document.getElementById("movieTrending"), watchBtn = document.getElementById("movieWatch");
+    const head = document.getElementById("movieHead"), grid = document.getElementById("movieGrid");
+    const ownUrl = document.getElementById("ownUrl"), ownPlay = document.getElementById("ownPlay"), ownVideo = document.getElementById("ownVideo");
+    let key = Store.get("tmdbKey", "");
+    const IMG = (p) => p ? ("https://image.tmdb.org/t/p/w342" + p) : "";
+    const watchlist = () => Store.get("watchlist", []);
+    const inWatch = (id) => watchlist().some((m) => m.id === id);
+    function toggleWatch(m) { let l = watchlist(); if (inWatch(m.id)) l = l.filter((x) => x.id !== m.id); else l.unshift({ id: m.id, title: m.title, poster: m.poster_path, year: (m.release_date || "").slice(0, 4), rating: m.vote_average }); Store.set("watchlist", l); }
+    function showApp() { const has = !!key; gate.style.display = has ? "none" : "block"; appEl.style.display = has ? "block" : "none"; }
+    showApp();
+    async function tmdb(path) { const url = "https://api.themoviedb.org/3/" + path + (path.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(key); const r = await fetch(url); if (!r.ok) throw new Error("TMDB " + r.status); return r.json(); }
+    function renderGrid(list, label) {
+      head.textContent = label || ""; grid.innerHTML = "";
+      if (!list || !list.length) { head.textContent = (label || "") + " — nothing here yet."; return; }
+      list.forEach((m) => {
+        const poster = m.poster || m.poster_path; const rt = (m.rating != null ? m.rating : m.vote_average) || 0; const rtStr = typeof rt === "number" ? rt.toFixed(1) : rt; const yr = m.year || (m.release_date || "").slice(0, 4);
+        const c = mk("button", "pc");
+        c.innerHTML = (poster ? `<img src="${IMG(poster)}" alt="">` : `<div style="aspect-ratio:2/3;background:var(--hi)"></div>`) + `<div class="pt">${m.title || "?"}</div><div class="pr">★ ${rtStr}${yr ? " · " + yr : ""}</div>`;
+        c.addEventListener("click", () => detail(m.id)); grid.appendChild(c);
+      });
+    }
+    async function trending() { if (!key) return; try { head.textContent = "Loading trending…"; const d = await tmdb("trending/movie/week"); renderGrid(d.results || [], "🔥 Trending this week"); } catch (e) { head.textContent = "Couldn't load — check your TMDB key."; } }
+    async function search(q) { if (!key || !q) return; try { head.textContent = "Searching…"; const d = await tmdb("search/movie?query=" + encodeURIComponent(q)); renderGrid(d.results || [], 'Results for "' + q + '"'); } catch (e) { head.textContent = "Search failed — check your key."; } }
+    async function detail(id) {
+      if (!key) return;
+      try {
+        const m = await tmdb("movie/" + id); grid.innerHTML = ""; head.textContent = "";
+        const wrap = mk("div", "card");
+        wrap.innerHTML = `<div style="display:flex;gap:12px">${m.poster_path ? `<img src="${IMG(m.poster_path)}" style="width:96px;border-radius:10px" alt="">` : ""}<div style="flex:1"><div style="font-weight:800;font-size:18px">${m.title}</div><div class="note" style="margin-top:2px">${(m.release_date || "").slice(0, 4)} · ★ ${(m.vote_average || 0).toFixed(1)} · ${m.runtime || "?"}m</div></div></div><div class="note" style="margin-top:10px">${m.overview || ""}</div>`;
+        const row = mk("div", "row"); row.style.marginTop = "10px";
+        const w = mk("button", "btn", inWatch(m.id) ? "★ In watchlist — remove" : "★ Add to watchlist"); w.style.marginTop = "0"; w.addEventListener("click", () => { toggleWatch(m); w.textContent = inWatch(m.id) ? "★ In watchlist — remove" : "★ Add to watchlist"; });
+        const back = mk("button", "btn ghost", "Back"); back.style.marginTop = "0"; back.style.flex = "0 0 auto"; back.addEventListener("click", trending);
+        row.append(w, back); wrap.appendChild(row); grid.appendChild(wrap);
+      } catch (e) { head.textContent = "Couldn't load that title."; }
+    }
+    keySave.addEventListener("click", () => { const k = (keyInput.value || "").trim(); if (!k) return; key = k; Store.set("tmdbKey", k); showApp(); trending(); });
+    searchBtn.addEventListener("click", () => search((searchEl.value || "").trim()));
+    searchEl.addEventListener("keydown", (e) => { if (e.key === "Enter") search((searchEl.value || "").trim()); });
+    trendBtn.addEventListener("click", trending);
+    watchBtn.addEventListener("click", () => renderGrid(watchlist(), "★ Your watchlist"));
+    ownPlay.addEventListener("click", () => { const u = (ownUrl.value || "").trim(); if (!u) return; ownVideo.style.display = "block"; ownVideo.src = u; if (ownVideo.play) ownVideo.play().catch(() => {}); });
+    if (key) trending();
   })();
   const stations = [
     { e: "🎧", t: "Lofi hip hop radio", d: "beats to relax / study to", id: "jfKfPfyJRdk" },
