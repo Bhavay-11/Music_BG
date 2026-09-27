@@ -91,7 +91,11 @@
     <div class="topbar"><h1>Music <span class="sm">Play any track or a chill station</span></h1></div>
     <div class="ytwrap" id="ytwrap"><iframe id="yt" src="https://www.youtube.com/embed/jfKfPfyJRdk?playsinline=1" allow="autoplay; encrypted-media" allowfullscreen title="player"></iframe></div>
     <input class="input" id="ytInput" placeholder="Paste a YouTube link or video ID…" />
-    <button class="btn" id="ytGo">Play</button>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="ytGo" style="margin-top:0">Play</button>
+      <button class="btn teal" id="ytShare" style="margin-top:0">🔗 Listen together</button>
+    </div>
+    <div class="note" id="ltMsg"></div>
     <div class="note">Stations</div>
     <div id="stations"></div>
     <div class="note">Playback uses YouTube's official embedded player, so it works on iPhone, Android and desktop. Full library streaming (search, downloads, background play) lives in the Android app.</div>
