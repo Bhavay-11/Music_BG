@@ -928,8 +928,10 @@
     musicView.classList.toggle("active", tab === "music");
     if (togetherView) togetherView.classList.toggle("active", tab === "together");
     const mv = document.getElementById("moviesView"); if (mv) mv.classList.toggle("active", tab === "movies");
-    // Leaving Movies: pause the film so it releases the audio session (else music can't play on mobile).
-    if (tab !== "movies") { const ov = document.querySelector("#ownWrap video"); if (ov) { try { ov.pause(); } catch (e) {} } }
+    // Avoid audio collisions on mobile (one media at a time): pause the film when leaving
+    // Movies, and pause music when entering Movies. Music keeps playing during games.
+    if (tab === "movies") { if (ytPlayer && ytPlayer.pauseVideo) { try { ytPlayer.pauseVideo(); } catch (e) {} } }
+    else { const ov = document.querySelector("#ownWrap video"); if (ov) { try { ov.pause(); } catch (e) {} } }
   }));
 
   // ---------- music (YouTube embedded player) ----------
@@ -942,6 +944,10 @@
   const savedEl = document.getElementById("saved");
   const recentEl = document.getElementById("recent");
   let curId = "jfKfPfyJRdk", curList = null;
+  // YouTube IFrame API — programmatic playback is far more reliable than URL autoplay.
+  let ytPlayer = null, ytReady = false;
+  window.onYouTubeIframeAPIReady = function () { try { ytPlayer = new YT.Player("yt", { events: { onReady: () => { ytReady = true; } } }); } catch (e) {} };
+  (function loadYtApi() { if (window.YT && window.YT.Player) { window.onYouTubeIframeAPIReady(); return; } if (document.getElementById("ytapi")) return; const s = document.createElement("script"); s.id = "ytapi"; s.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(s); })();
   function pushRecent(item) { if (!item.id) return; let l = Store.get("recent", []); l = l.filter((i) => i.id !== item.id); l.unshift(item); Store.set("recent", l.slice(0, 15)); renderRecent(); }
   function renderRecent() {
     if (!recentEl) return; const l = Store.get("recent", []); recentEl.innerHTML = "";
@@ -950,9 +956,34 @@
   }
   const ytId = (v) => { v = (v || "").trim(); const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); if (m) return m[1]; if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v; return null; };
   const ytListId = (v) => { const m = (v || "").match(/[?&]list=([A-Za-z0-9_-]+)/); return m ? m[1] : null; };
-  function loadYt(id, start) { curId = id; curList = null; yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0" + (start ? "&start=" + start : ""); pushRecent({ type: "song", id, label: "Song " + id.slice(0, 6) }); }
-  function loadList(listId) { curList = listId; curId = null; yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1"; pushRecent({ type: "list", id: listId, label: "Playlist " + listId.slice(0, 6) }); }
-  function playInput() { const v = ytInput.value; const list = ytListId(v); if (list) loadList(list); else { const id = ytId(v); if (id) loadYt(id); } }
+  function loadYt(id, start) {
+    curId = id; curList = null;
+    if (ytReady && ytPlayer && ytPlayer.loadVideoById) {
+      try { ytPlayer.loadVideoById({ videoId: id, startSeconds: start || 0 }); if (ytPlayer.playVideo) ytPlayer.playVideo(); }
+      catch (e) { yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0&enablejsapi=1" + (start ? "&start=" + start : ""); }
+    } else {
+      yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0&enablejsapi=1" + (start ? "&start=" + start : "");
+    }
+    if (ltMsg) ltMsg.textContent = "";
+    pushRecent({ type: "song", id, label: "Song " + id.slice(0, 6) });
+  }
+  function loadList(listId) {
+    curList = listId; curId = null;
+    if (ytReady && ytPlayer && ytPlayer.loadPlaylist) {
+      try { ytPlayer.loadPlaylist({ list: listId, listType: "playlist", index: 0 }); if (ytPlayer.playVideo) ytPlayer.playVideo(); }
+      catch (e) { yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1&enablejsapi=1"; }
+    } else {
+      yt.src = "https://www.youtube.com/embed/videoseries?list=" + listId + "&playsinline=1&autoplay=1&enablejsapi=1";
+    }
+    if (ltMsg) ltMsg.textContent = "";
+    pushRecent({ type: "list", id: listId, label: "Playlist " + listId.slice(0, 6) });
+  }
+  function playInput() {
+    const v = (ytInput.value || "").trim();
+    const list = ytListId(v); if (list) return loadList(list);
+    const id = ytId(v); if (id) return loadYt(id);
+    if (ltMsg) ltMsg.textContent = v ? "That doesn't look like a YouTube link or ID — paste a full youtube.com / youtu.be link." : "Paste a YouTube song or playlist link, then tap Play.";
+  }
   ytGo.addEventListener("click", playInput);
   ytInput.addEventListener("keydown", (e) => { if (e.key === "Enter") playInput(); });
   function renderSaved() {
