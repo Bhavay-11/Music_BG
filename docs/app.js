@@ -723,6 +723,70 @@
       s.append(H('<div class="note">Tap between two dots to draw a line. Close a box to score and go again.</div>'));
     }});
 
+  // ---- Splash Duel (live territory paint, 2P) — original ----
+  games.push({ id:"splash", name:"Splash Duel", tag:"Paint more territory · 2P live", emoji:"🎨", color:"#b06bff", cat:"Competitive",
+    render(s){ const st=mk("div","status"); s.appendChild(st); const GW=9,GH=14; const c=makeCanvas(s,GW*30,GH*30); if(!c.ctx)return; const {ctx,W,H,cv,toLocal}=c;
+      const cs=W/GW; let cells=new Array(GW*GH).fill(0), time=45, over=false, last=performance.now(), acc=0, raf; const ptr={};
+      function paint(x,y,who){ const cx=Math.floor(x/cs),cy=Math.floor(y/cs); [[0,0],[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{ const nx=cx+dx,ny=cy+dy; if(nx>=0&&nx<GW&&ny>=0&&ny<GH)cells[ny*GW+nx]=who; }); }
+      cv.addEventListener("pointerdown",e=>{ if(over){ cells=new Array(GW*GH).fill(0); time=45; over=false; acc=0; last=performance.now(); return; } const l=toLocal(e.clientX,e.clientY); ptr[e.pointerId]=l.y>H/2?1:2; paint(l.x,l.y,ptr[e.pointerId]); FX.tap(); });
+      cv.addEventListener("pointermove",e=>{ const w=ptr[e.pointerId]; if(!w||over)return; const l=toLocal(e.clientX,e.clientY); paint(l.x,l.y,w); });
+      cv.addEventListener("pointerup",e=>{delete ptr[e.pointerId];}); cv.addEventListener("pointercancel",e=>{delete ptr[e.pointerId];});
+      function step(now){ now=now||performance.now(); const dt=now-last; last=now; if(!over){acc+=dt; if(acc>=1000){acc-=1000;time--; if(time<=0){over=true;FX.win();}}}
+        ctx.clearRect(0,0,W,H);
+        for(let i=0;i<cells.length;i++){ const o=cells[i]; ctx.fillStyle=o===1?"#e5484d":o===2?"#4c7df0":"#1c1830"; ctx.fillRect((i%GW)*cs+1,Math.floor(i/GW)*cs+1,cs-2,cs-2); }
+        ctx.strokeStyle="rgba(255,255,255,.2)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+        const c1=cells.filter(v=>v===1).length, c2=cells.filter(v=>v===2).length;
+        st.textContent = over? (c1>c2?`🔴 wins ${c1}–${c2}! 🎉`:c2>c1?`🔵 wins ${c2}–${c1}! 🎉`:`Tie ${c1}–${c2}`) : `🔴 ${c1}  🔵 ${c2}  · ${time}s`;
+        if(over){ ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 20px sans-serif";ctx.fillText("tap to rematch",W/2,H/2); }
+        raf=requestAnimationFrame(step); }
+      step();
+      s.append(H('<div class="note">Bottom player is 🔴, top is 🔵. Smear your colour across the grid — most tiles when time runs out wins. Multi-touch, play at once!</div>'));
+      return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Orbit Sumo (physics ring-out, 2P) ----
+  games.push({ id:"sumo", name:"Orbit Sumo", tag:"Shove them out the ring · 2P", emoji:"⭕", color:"#e5484d", cat:"Competitive",
+    render(s){ const st=mk("div","status"); st.textContent="0 — 0"; s.appendChild(st); const c=makeCanvas(s,340,440); if(!c.ctx)return; const {ctx,W,H,cv,toLocal}=c;
+      const cx=W/2, cy=H/2, ring=Math.min(W,H)/2-14, R=24; let s1=0,s2=0,round=true,winner=0,raf; const ptr={};
+      const d1={x:cx,y:cy+70,px:cx,py:cy+70}, d2={x:cx,y:cy-70,px:cx,py:cy-70};
+      function reset(){ d1.x=cx;d1.y=cy+70;d1.px=d1.x;d1.py=d1.y; d2.x=cx;d2.y=cy-70;d2.px=d2.x;d2.py=d2.y; round=true; winner=0; }
+      cv.addEventListener("pointerdown",e=>{ if(!round){reset();return;} const l=toLocal(e.clientX,e.clientY); ptr[e.pointerId]=l.y>cy?"d1":"d2"; drag(e); });
+      cv.addEventListener("pointermove",drag); cv.addEventListener("pointerup",e=>{delete ptr[e.pointerId];}); cv.addEventListener("pointercancel",e=>{delete ptr[e.pointerId];});
+      function drag(e){ const w=ptr[e.pointerId]; if(!w)return; const l=toLocal(e.clientX,e.clientY); const d=w==="d1"?d1:d2; d.x=l.x; d.y=l.y; if(e.preventDefault)e.preventDefault(); }
+      function step(){ const v1={x:d1.x-d1.px,y:d1.y-d1.py}, v2={x:d2.x-d2.px,y:d2.y-d2.py};
+        const dx=d1.x-d2.x, dy=d1.y-d2.y, dist=Math.hypot(dx,dy);
+        if(dist<2*R&&dist>0){ const nx=dx/dist,ny=dy/dist,ov=2*R-dist; d1.x+=nx*ov/2;d1.y+=ny*ov/2;d2.x-=nx*ov/2;d2.y-=ny*ov/2; const imp=Math.abs((v1.x-v2.x)*nx+(v1.y-v2.y)*ny)*1.3+2; d1.x+=nx*imp;d1.y+=ny*imp;d2.x-=nx*imp;d2.y-=ny*imp; FX.hit(); }
+        d1.px=d1.x;d1.py=d1.y;d2.px=d2.x;d2.py=d2.y;
+        if(round){ if(Math.hypot(d1.x-cx,d1.y-cy)>ring+R){s2++;winner=2;round=false;FX.win();} else if(Math.hypot(d2.x-cx,d2.y-cy)>ring+R){s1++;winner=1;round=false;FX.win();} }
+        ctx.fillStyle="#0a0812";ctx.fillRect(0,0,W,H); ctx.strokeStyle="rgba(255,255,255,.22)";ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,cy,ring,0,TAU);ctx.stroke();
+        [[d1,"#e5484d"],[d2,"#4c7df0"]].forEach(([d,col])=>{ ctx.save();ctx.shadowBlur=18;ctx.shadowColor=col;ctx.fillStyle=col;ctx.beginPath();ctx.arc(d.x,d.y,R,0,TAU);ctx.fill();ctx.restore(); });
+        st.textContent = winner? (winner===1?"🔴 wins the round!":"🔵 wins the round!") : s1+" — "+s2;
+        if(!round){ ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 20px sans-serif";ctx.fillText("tap to rematch",cx,cy); }
+        raf=requestAnimationFrame(step); }
+      step();
+      s.append(H('<div class="note">Drag your disc (🔴 bottom, 🔵 top), build speed, and slam your rival out of the ring. Multi-touch.</div>'));
+      return ()=>cancelAnimationFrame(raf);
+    }});
+
+  // ---- Reactor Duel (quick-draw reflex, 2P best of 5) ----
+  games.push({ id:"reactor", name:"Reactor Duel", tag:"First to tap on green · 2P", emoji:"🟢", color:"#2fbf71", cat:"Competitive",
+    render(s){ const st=mk("div","status"); s.appendChild(st); let s1=0,s2=0,phase="ready",timer=null;
+      const z2=mk("button","tapzone"); z2.style.height="150px"; const mid=mk("div","status"); mid.style.textAlign="center"; const z1=mk("button","tapzone"); z1.style.height="150px";
+      function col(bg,msg){ z1.style.background=bg; z2.style.background=bg; mid.textContent=msg; }
+      function arm(){ phase="armed"; col("#b23a48","Wait for GREEN…"); clearTimeout(timer); timer=setTimeout(()=>{ phase="go"; col("#2fbf71","TAP NOW!"); }, 1200+rnd(3000)); }
+      function endRound(winner,foul){ phase="done"; clearTimeout(timer); if(winner===1)s1++; else s2++; st.textContent="🔵 "+s2+"   🔴 "+s1;
+        if(s1>=5||s2>=5){ phase="match"; col("#2a2440",(s1>=5?"🔴 wins the match! 🎉":"🔵 wins the match! 🎉")); FX.win(); }
+        else col("#2a2440",(foul?"False start — point to ":"Point to ")+(winner===1?"🔴":"🔵")+" · tap to continue"); }
+      function tap(p){ if(phase==="match"){ s1=0;s2=0;st.textContent="🔵 0   🔴 0"; arm(); return; }
+        if(phase==="ready"||phase==="done"){ arm(); return; }
+        if(phase==="armed"){ endRound(p===1?2:1,true); FX.buzz(); return; }
+        if(phase==="go"){ endRound(p,false); FX.pop(); return; } }
+      z1.addEventListener("click",()=>tap(1)); z2.addEventListener("click",()=>tap(2));
+      z2.textContent="Player 2 (top)"; z1.textContent="Player 1 (bottom)"; st.textContent="🔵 0   🔴 0"; col("#2a2440","Tap either side to start · first to 5");
+      s.append(st,z2,mid,z1,H('<div class="note">When both panels turn GREEN, be first to tap YOUR side. Tap early and your rival scores. First to 5 wins.</div>'));
+      return ()=>clearTimeout(timer);
+    }});
+
   function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 
   // ---------- build hub (grouped into Kulfi-style categories) ----------
