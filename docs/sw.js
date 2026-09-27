@@ -1,5 +1,5 @@
 // Network-first so updates always reach users; falls back to cache offline.
-const CACHE = "musicbg-v3";
+const CACHE = "musicbg-v4";
 const ASSETS = ["./", "./index.html", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {

@@ -1037,7 +1037,7 @@
     const searchEl = document.getElementById("movieSearch"), searchBtn = document.getElementById("movieSearchBtn");
     const trendBtn = document.getElementById("movieTrending"), watchBtn = document.getElementById("movieWatch");
     const head = document.getElementById("movieHead"), grid = document.getElementById("movieGrid");
-    const ownUrl = document.getElementById("ownUrl"), ownPlay = document.getElementById("ownPlay"), ownVideo = document.getElementById("ownVideo");
+    const ownUrl = document.getElementById("ownUrl"), ownPlay = document.getElementById("ownPlay"), ownStop = document.getElementById("ownStop"), ownStatus = document.getElementById("ownStatus"), ownWrap = document.getElementById("ownWrap");
     let key = Store.get("tmdbKey", "");
     const IMG = (p) => p ? ("https://image.tmdb.org/t/p/w342" + p) : "";
     const watchlist = () => Store.get("watchlist", []);
@@ -1075,24 +1075,46 @@
     searchEl.addEventListener("keydown", (e) => { if (e.key === "Enter") search((searchEl.value || "").trim()); });
     trendBtn.addEventListener("click", trending);
     watchBtn.addEventListener("click", () => renderGrid(watchlist(), "★ Your watchlist"));
+    // ---- Bhavay Video Player: direct HLS/MP4 engine (no P2P) ----
     let hls = null;
-    function loadHls() { return new Promise((res) => { if (window.Hls) return res(window.Hls); const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/hls.js@1"; s.onload = () => res(window.Hls); s.onerror = () => res(null); document.head.appendChild(s); }); }
-    ownPlay.addEventListener("click", async () => {
-      const u = (ownUrl.value || "").trim(); if (!u) return;
-      ownVideo.style.display = "block";
+    function log(msg, isErr) { if (!ownStatus) return; ownStatus.textContent = msg; ownStatus.classList.toggle("err", !!isErr); }
+    function loadHls() { return new Promise((res) => { if (window.Hls) return res(window.Hls); log("Loading HLS engine…"); const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/hls.js@1"; s.onload = () => res(window.Hls); s.onerror = () => res(null); document.head.appendChild(s); }); }
+    function resetPlayer() {
+      // Fully tear down the previous session (frees sockets/buffers), then mount a fresh <video> to avoid buffer lockups & memory leaks.
       if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+      ownWrap.innerHTML = "";
+      const v = mk("video"); v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute("playsinline", "");
+      v.addEventListener("playing", () => log("Playing."));
+      v.addEventListener("waiting", () => log("Buffering…"));
+      v.addEventListener("ended", () => log("Finished."));
+      v.addEventListener("error", () => log("Playback error — check the URL is reachable and CORS-enabled.", true));
+      ownWrap.appendChild(v); ownWrap.style.display = "flex";
+      return v;
+    }
+    ownPlay.addEventListener("click", async () => {
+      const u = (ownUrl.value || "").trim();
+      if (!u) return log("Enter a direct .m3u8, .mp4 or .webm URL you own.", true);
+      if (!/^https?:\/\//i.test(u)) return log("Only http(s) URLs are supported (no magnet / P2P links).", true);
+      const video = resetPlayer();
+      log("Resolving " + u.slice(0, 60) + (u.length > 60 ? "…" : ""));
       const isHls = /\.m3u8(\?|$)/i.test(u);
-      const nativeHls = ownVideo.canPlayType && ownVideo.canPlayType("application/vnd.apple.mpegurl");
+      const nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
       if (isHls && !nativeHls) {
         const Hls = await loadHls();
         if (Hls && Hls.isSupported()) {
-          hls = new Hls(); hls.loadSource(u); hls.attachMedia(ownVideo);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { if (ownVideo.play) ownVideo.play().catch(() => {}); });
+          hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 600 });
+          hls.loadSource(u); hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { log("HLS manifest parsed — starting playback."); if (video.play) video.play().catch((e) => log("Tap ▶ to start (autoplay blocked): " + e.message, true)); });
+          hls.on(Hls.Events.ERROR, (ev, data) => { if (data && data.fatal) log("HLS fatal error: " + data.type, true); });
           return;
         }
+        log("HLS isn't supported in this browser.", true); return;
       }
-      ownVideo.src = u; if (ownVideo.play) ownVideo.play().catch(() => {});
+      video.src = u;
+      if (video.play) video.play().catch((e) => log("Tap ▶ to start (autoplay blocked): " + e.message, true));
+      log(isHls ? "Native HLS loaded." : "Direct file loaded.");
     });
+    if (ownStop) ownStop.addEventListener("click", () => { if (hls) { try { hls.destroy(); } catch (e) {} hls = null; } ownWrap.innerHTML = ""; ownWrap.style.display = "none"; log("Stopped."); });
     if (key) trending();
   })();
   const stations = [
