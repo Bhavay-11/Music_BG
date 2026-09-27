@@ -1079,6 +1079,7 @@
     let hls = null;
     function log(msg, isErr) { if (!ownStatus) return; ownStatus.textContent = msg; ownStatus.classList.toggle("err", !!isErr); }
     function loadHls() { return new Promise((res) => { if (window.Hls) return res(window.Hls); log("Loading HLS engine…"); const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/hls.js@1"; s.onload = () => res(window.Hls); s.onerror = () => res(null); document.head.appendChild(s); }); }
+    function safePlay(v) { try { const p = v.play && v.play(); if (p && p.catch) p.catch((e) => log("Tap ▶ to start (autoplay blocked): " + (e && e.message || e), true)); } catch (e) { log("Tap ▶ to start playback.", true); } }
     function resetPlayer() {
       // Fully tear down the previous session (frees sockets/buffers), then mount a fresh <video> to avoid buffer lockups & memory leaks.
       if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
@@ -1104,14 +1105,14 @@
         if (Hls && Hls.isSupported()) {
           hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 600 });
           hls.loadSource(u); hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { log("HLS manifest parsed — starting playback."); if (video.play) video.play().catch((e) => log("Tap ▶ to start (autoplay blocked): " + e.message, true)); });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { log("HLS manifest parsed — starting playback."); safePlay(video); });
           hls.on(Hls.Events.ERROR, (ev, data) => { if (data && data.fatal) log("HLS fatal error: " + data.type, true); });
           return;
         }
         log("HLS isn't supported in this browser.", true); return;
       }
       video.src = u;
-      if (video.play) video.play().catch((e) => log("Tap ▶ to start (autoplay blocked): " + e.message, true));
+      safePlay(video);
       log(isHls ? "Native HLS loaded." : "Direct file loaded.");
     });
     if (ownStop) ownStop.addEventListener("click", () => { if (hls) { try { hls.destroy(); } catch (e) {} hls = null; } ownWrap.innerHTML = ""; ownWrap.style.display = "none"; log("Stopped."); });

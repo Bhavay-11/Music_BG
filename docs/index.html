@@ -141,10 +141,21 @@
   </div>
 
   <div id="moviesView" class="tabview">
-    <div class="topbar"><h1>Movies <span class="sm">Browse, track &amp; watch your own</span></h1></div>
+    <div class="topbar"><h1>Movies <span class="sm">Watch your own · browse a catalog</span></h1></div>
+    <div class="engine">
+      <div class="note"><b>🎥 Bhavay Video Player</b> — play your own file (self-hosted / Jellyfin direct link). HLS &amp; MP4. No key, no P2P.</div>
+      <input class="input" id="ownUrl" placeholder="Direct video URL you own (.m3u8 / .mp4 / .webm)…" />
+      <div class="row" style="flex-wrap:wrap">
+        <button class="btn teal" id="ownPlay" style="margin-top:0">▶ Play stream</button>
+        <button class="btn ghost" id="ownStop" style="margin-top:0;flex:0 0 auto">■ Stop</button>
+      </div>
+      <div id="ownStatus" class="console">Awaiting input…</div>
+      <div id="ownWrap" class="playerwrap" style="display:none"></div>
+    </div>
+    <div class="note" style="margin-top:24px;opacity:.75">— Optional: browse &amp; track a movie catalog —</div>
     <div id="tmdbGate">
-      <div class="note">Paste your free <b>TMDB API key</b> (themoviedb.org → Settings → API → API Read Access / v3 key). Stored only on this device.</div>
-      <input class="input" id="tmdbKey" placeholder="TMDB API key" />
+      <div class="note">Paste a free <b>TMDB API key</b> (themoviedb.org → Settings → API → API Read Access / v3 key) to search &amp; track titles. Optional — the player above works without it. Stored only on this device.</div>
+      <input class="input" id="tmdbKey" placeholder="TMDB API key (optional)" />
       <button class="btn" id="tmdbSave">Save key</button>
     </div>
     <div id="tmdbApp" style="display:none">
@@ -156,16 +167,6 @@
       </div>
       <div id="movieHead" class="note"></div>
       <div id="movieGrid" class="pgrid"></div>
-      <div class="engine">
-        <div class="note" style="margin-top:16px"><b>🎥 Bhavay Video Player</b> — play your own file (self-hosted / Jellyfin direct link). HLS &amp; MP4, no P2P.</div>
-        <input class="input" id="ownUrl" placeholder="Direct video URL you own (.m3u8 / .mp4 / .webm)…" />
-        <div class="row" style="flex-wrap:wrap">
-          <button class="btn teal" id="ownPlay" style="margin-top:0">▶ Play stream</button>
-          <button class="btn ghost" id="ownStop" style="margin-top:0;flex:0 0 auto">■ Stop</button>
-        </div>
-        <div id="ownStatus" class="console">Awaiting input…</div>
-        <div id="ownWrap" class="playerwrap" style="display:none"></div>
-      </div>
     </div>
   </div>
 </div>
