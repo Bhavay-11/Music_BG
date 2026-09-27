@@ -210,6 +210,57 @@
       return ()=>clearInterval(loop);
     }});
 
+  // ---- Gomoku (five in a row) ----
+  games.push({ id:"gomoku", name:"Gomoku", tag:"Five in a row wins · 2P", emoji:"⚫", color:"#b06bff",
+    render(s){ const N=12; let b=Array(N*N).fill(""), black=true, over=false;
+      const win=()=>{const d=[[0,1],[1,0],[1,1],[1,-1]];for(let r=0;r<N;r++)for(let c=0;c<N;c++){const v=b[r*N+c];if(!v)continue;for(const[dr,dc]of d){let k=1;while(k<5){const nr=r+dr*k,nc=c+dc*k;if(nr<0||nr>=N||nc<0||nc>=N||b[nr*N+nc]!==v)break;k++;}if(k===5)return v;}}return"";};
+      const st=mk("div","status");const board=mk("div","board");board.style.gridTemplateColumns=`repeat(${N},1fr)`;board.style.background="var(--card)";board.style.padding="4px";board.style.borderRadius="10px";
+      const cells=[];for(let i=0;i<N*N;i++){const c=mk("button","cell");c.style.borderRadius="3px";c.style.fontSize="0";c.onclick=()=>tap(i);board.appendChild(c);cells.push(c);}
+      function draw(){cells.forEach((c,i)=>{c.style.background=b[i]==="B"?"var(--text)":b[i]==="W"?"var(--coral)":"var(--hi)";});const w=win();st.textContent=w?`${w==="B"?"Black":"Coral"} wins! 🎉`:(b.every(v=>v)?"Draw":`${black?"Black":"Coral"}'s turn`);}
+      function tap(i){if(over||b[i]||win())return;b[i]=black?"B":"W";black=!black;if(win())over=true;draw();}
+      const btn=mk("button","btn","New game");btn.onclick=()=>{b=Array(N*N).fill("");black=true;over=false;draw();};
+      s.append(st,board,btn);draw(); }});
+
+  // ---- Would You Rather ----
+  games.push({ id:"wyr", name:"Would You Rather", tag:"Impossible choices, together", emoji:"⚖️", color:"#2fbf71",
+    render(s){ const D=[["Only music forever","Only movies forever"],["Read minds","Be invisible"],["Always 10 min late","Always 20 min early"],["Give up coffee","Give up dessert"],["Text only","Call only"],["Beach holiday","Mountain escape"],["Rewind button","Pause button"],["Know every lyric","Play any instrument"],["Teleport","Fly"],["Endless summer","Endless weekend"]];
+      let order=shuffle(D.map((_,i)=>i)), i=0, ans=0, picked=false;
+      const st=mk("div","status"); const wrap=mk("div");
+      function round(){ wrap.innerHTML=""; picked=false; const d=D[order[i%order.length]]; st.textContent="Answered: "+ans;
+        const a=mk("button","tapzone"); a.style.background="var(--lav)"; a.textContent=d[0];
+        const orr=mk("div","center","or"); orr.style.color="var(--muted)"; orr.style.margin="10px 0";
+        const bb=mk("button","tapzone"); bb.style.background="var(--coral)"; bb.textContent=d[1];
+        a.onclick=bb.onclick=()=>{ if(picked)return; picked=true; ans++; i++; setTimeout(round,150); };
+        wrap.append(a,orr,bb); }
+      s.append(st,wrap,H('<div class="note">Great for two — debate it, then tap one to move on.</div>')); round(); }});
+
+  // ---- Higher or Lower ----
+  games.push({ id:"hilo", name:"Higher or Lower", tag:"Guess the secret number", emoji:"🔢", color:"#e5484d",
+    render(s){ let target=1+rnd(100), lo=1, hi=100, guess=50, tries=0, done=false;
+      const st=mk("div","status"); const num=mk("div","center big","50"); const hint=mk("div","status"); hint.textContent="I'm thinking of 1–100";
+      const rowmm=mk("div","row"); const minus=mk("button","btn ghost","–"); const plus=mk("button","btn ghost","+");
+      minus.onclick=()=>{guess=Math.max(lo,guess-1);num.textContent=guess;}; plus.onclick=()=>{guess=Math.min(hi,guess+1);num.textContent=guess;}; rowmm.append(minus,plus);
+      const go=mk("button","btn","Guess");
+      go.onclick=()=>{ if(done)return; tries++; if(guess===target){done=true;hint.textContent=`Got it in ${tries}! 🎉`;num.style.color="var(--teal)";go.textContent="Play again";go.onclick=()=>render2();}
+        else if(guess<target){lo=guess+1;hint.textContent="Higher ⬆️";guess=Math.floor((lo+hi)/2);num.textContent=guess;} else {hi=guess-1;hint.textContent="Lower ⬇️";guess=Math.floor((lo+hi)/2);num.textContent=guess;} st.textContent=`Attempts: ${tries} · range ${lo}–${hi}`; };
+      function render2(){ s.innerHTML=""; games.find(g=>g.id==="hilo").render(s); }
+      st.textContent="Attempts: 0";
+      s.append(st,num,hint,rowmm,go); }});
+
+  // ---- Whack-a-Tap ----
+  games.push({ id:"whack", name:"Whack-a-Tap", tag:"Hit the glowing tile, fast", emoji:"🎯", color:"#f2c14e",
+    render(s){ let score=0, left=20, target=0, run=false, best=0, t1=null, t2=null;
+      const st=mk("div","status"); const board=mk("div","board"); board.style.gridTemplateColumns="repeat(3,1fr)";
+      const cells=Array.from({length:9},(_,i)=>{const c=mk("button","cell");c.onclick=()=>hit(i);board.appendChild(c);return c;});
+      const btn=mk("button","btn","Start");
+      function draw(){cells.forEach((c,i)=>{c.style.background=(run&&i===target)?"var(--coral)":"var(--hi)";c.textContent=(run&&i===target)?"🎯":"";});st.textContent=run?`Score ${score} · ${left}s`:(best?`Best: ${best}`:"Tap Start");}
+      function moveT(){let n=rnd(9);if(n===target)n=(n+1)%9;target=n;draw();clearTimeout(t2);t2=setTimeout(moveT,850);}
+      function hit(i){if(run&&i===target){score++;moveT();}}
+      function start(){score=0;left=20;run=true;btn.style.display="none";moveT();clearInterval(t1);t1=setInterval(()=>{left--;draw();if(left<=0){run=false;clearInterval(t1);clearTimeout(t2);if(score>best)best=score;btn.textContent="Play again";btn.style.display="";draw();}},1000);draw();}
+      btn.onclick=start;
+      s.append(st,board,btn); draw();
+      return ()=>{clearInterval(t1);clearTimeout(t2);}; }});
+
   function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 
   // ---------- build hub ----------
@@ -220,6 +271,37 @@
     t.append(ic, body); grid.appendChild(t);
   });
 
+  // ---------- tabs (Play / Music) ----------
+  const tabs = document.querySelectorAll("#tabs .tab");
+  const playView = document.getElementById("playView");
+  const musicView = document.getElementById("musicView");
+  tabs.forEach((t) => t.addEventListener("click", () => {
+    tabs.forEach((x) => x.classList.toggle("on", x === t));
+    const tab = t.dataset.tab;
+    playView.classList.toggle("active", tab === "play");
+    musicView.classList.toggle("active", tab === "music");
+  }));
+
+  // ---------- music (YouTube embedded player) ----------
+  const yt = document.getElementById("yt");
+  const ytInput = document.getElementById("ytInput");
+  const ytGo = document.getElementById("ytGo");
+  const ytId = (v) => { v = (v || "").trim(); const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); if (m) return m[1]; if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v; return null; };
+  const loadYt = (id) => { yt.src = "https://www.youtube.com/embed/" + id + "?playsinline=1&autoplay=1&rel=0"; };
+  ytGo.addEventListener("click", () => { const id = ytId(ytInput.value); if (id) loadYt(id); });
+  ytInput.addEventListener("keydown", (e) => { if (e.key === "Enter") ytGo.click(); });
+  const stations = [
+    { e: "🎧", t: "Lofi hip hop radio", d: "beats to relax / study to", id: "jfKfPfyJRdk" },
+    { e: "🌆", t: "Synthwave radio", d: "chill retro vibes", id: "4xDzrJKXOOY" },
+  ];
+  const stEl = document.getElementById("stations");
+  stations.forEach((s) => {
+    const b = mk("button", "station");
+    b.innerHTML = `<span class="e">${s.e}</span><span><div class="t">${s.t}</div><div class="d">${s.d}</div></span>`;
+    b.addEventListener("click", () => loadYt(s.id));
+    stEl.appendChild(b);
+  });
+
   // service worker for offline / installable
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

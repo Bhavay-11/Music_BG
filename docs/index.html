@@ -10,12 +10,12 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icon.svg" />
 <link rel="icon" href="icon.svg" />
-<title>Music_BG · Play</title>
+<title>Music_BG</title>
 <style>
   :root{
     --bg:#0f0d17; --card:#1c1830; --card2:#262040; --hi:#312a4d;
     --coral:#e5484d; --teal:#2fbf71; --lav:#b06bff; --amber:#f2c14e;
-    --text:#f3eefb; --muted:#a99fc0; --on:#1a1030;
+    --text:#f3eefb; --muted:#a99fc0;
     --safe-top:env(safe-area-inset-top); --safe-bottom:env(safe-area-inset-bottom);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
@@ -23,63 +23,78 @@
   body{
     background:radial-gradient(1200px 600px at 50% -10%, #1a1530 0%, var(--bg) 60%);
     color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
-    padding:var(--safe-top) 0 var(--safe-bottom); overflow-x:hidden;
+    padding-top:var(--safe-top); overflow-x:hidden;
   }
-  #app{max-width:640px;margin:0 auto;padding:14px 16px 40px;}
+  #app{max-width:640px;margin:0 auto;padding:14px 16px calc(96px + var(--safe-bottom));}
+  .tabview{display:none;} .tabview.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .topbar{display:flex;align-items:center;gap:10px;padding:6px 2px 14px;}
-  .back{display:none;width:40px;height:40px;border-radius:50%;background:var(--hi);border:none;color:var(--text);
-    font-size:20px;cursor:pointer;align-items:center;justify-content:center;}
+  .back{display:none;width:40px;height:40px;border-radius:50%;background:var(--hi);border:none;color:var(--text);font-size:20px;cursor:pointer;align-items:center;justify-content:center;}
   .back.show{display:inline-flex;}
   h1{font-size:24px;font-weight:800;margin:0;letter-spacing:.3px;}
   h1 .sm{color:var(--muted);font-weight:600;font-size:14px;display:block;margin-top:2px;}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .tile{position:relative;border:none;text-align:left;cursor:pointer;color:var(--text);
-    aspect-ratio:.95;border-radius:24px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;
-    background:linear-gradient(160deg,var(--card2),var(--card));box-shadow:0 6px 20px rgba(0,0,0,.35);}
+  .tile{position:relative;border:none;text-align:left;cursor:pointer;color:var(--text);aspect-ratio:.95;border-radius:24px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(160deg,var(--card2),var(--card));box-shadow:0 6px 20px rgba(0,0,0,.35);}
   .tile:active{transform:scale(.97);}
   .tile .ic{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;}
-  .tile .nm{font-weight:800;font-size:16px;}
-  .tile .tg{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.25;}
-  .view{display:none;animation:fade .25s ease;}
-  .view.active{display:block;}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .tile .nm{font-weight:800;font-size:16px;} .tile .tg{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.25;}
+  .view{display:none;} .view.active{display:block;animation:fade .25s ease;}
   .status{font-size:18px;font-weight:700;margin:6px 0 14px;min-height:24px;}
-  .btn{background:var(--coral);color:#fff;border:none;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:700;
-    cursor:pointer;width:100%;margin-top:10px;}
-  .btn:active{transform:scale(.98);}
-  .btn.ghost{background:var(--hi);color:var(--text);}
-  .btn.teal{background:var(--teal);}
-  .row{display:flex;gap:10px;}
-  .card{background:var(--card2);border-radius:16px;padding:16px;}
+  .btn{background:var(--coral);color:#fff;border:none;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-top:10px;}
+  .btn:active{transform:scale(.98);} .btn.ghost{background:var(--hi);color:var(--text);} .btn.teal{background:var(--teal);}
+  .row{display:flex;gap:10px;} .card{background:var(--card2);border-radius:16px;padding:16px;}
   .note{color:var(--muted);font-size:13px;margin-top:12px;line-height:1.4;}
   .board{display:grid;gap:8px;margin:4px 0;}
-  .cell{background:var(--hi);border-radius:12px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-size:34px;font-weight:800;cursor:pointer;border:none;color:var(--text);}
+  .cell{background:var(--hi);border-radius:12px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;cursor:pointer;border:none;color:var(--text);}
   .cell:active{transform:scale(.96);}
-  .pill{background:var(--hi);border-radius:50px;padding:8px 14px;font-weight:700;display:inline-flex;gap:8px;align-items:center;}
   .center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;}
   .big{font-size:64px;font-weight:800;}
-  .tapzone{border-radius:24px;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;
-    color:#fff;font-weight:800;font-size:28px;cursor:pointer;text-align:center;padding:20px;}
+  .tapzone{border-radius:24px;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:800;font-size:28px;cursor:pointer;text-align:center;padding:20px;}
   .footer{color:var(--muted);font-size:12px;text-align:center;margin-top:26px;}
   .dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px;justify-content:center;margin-top:12px;}
   .dbtn{background:var(--hi);border:none;border-radius:14px;color:var(--text);font-size:24px;cursor:pointer;}
-  .seg{display:flex;gap:8px;flex-wrap:wrap;}
-  .seg .opt{flex:1;min-width:120px;background:var(--hi);border:none;color:var(--text);border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;}
-  .seg .opt.on{background:var(--coral);color:#fff;}
+  .seg{display:flex;gap:8px;flex-wrap:wrap;} .seg .opt{flex:1;min-width:120px;background:var(--hi);border:none;color:var(--text);border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;} .seg .opt.on{background:var(--coral);color:#fff;}
+  /* music */
+  .ytwrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;margin-top:12px;}
+  .ytwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .input{width:100%;background:var(--hi);border:none;color:var(--text);border-radius:14px;padding:14px;font-size:15px;margin-top:12px;}
+  .station{display:flex;align-items:center;gap:12px;background:var(--card2);border:none;color:var(--text);border-radius:14px;padding:12px 14px;width:100%;margin-top:10px;cursor:pointer;text-align:left;}
+  .station .e{font-size:24px;} .station .t{font-weight:700;} .station .d{color:var(--muted);font-size:12px;}
+  /* bottom tab bar */
+  #tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;padding:8px 12px calc(8px + var(--safe-bottom));
+    background:linear-gradient(to top, rgba(15,13,23,.98), rgba(15,13,23,.85) 70%, rgba(15,13,23,0));backdrop-filter:blur(12px);}
+  .tab{flex:1;max-width:180px;background:transparent;border:none;color:var(--muted);border-radius:16px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .tab .ti{font-size:22px;} .tab.on{color:var(--coral);background:rgba(229,72,77,.14);}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="topbar">
-    <button class="back" id="backBtn" aria-label="Back">‹</button>
-    <h1 id="title">Music_BG <span class="sm" id="subtitle">Play together — near or far</span></h1>
+  <div id="playView" class="tabview active">
+    <div class="topbar">
+      <button class="back" id="backBtn" aria-label="Back">‹</button>
+      <h1 id="title">Music_BG <span class="sm" id="subtitle">Play together — near or far</span></h1>
+    </div>
+    <div id="hub" class="view active"><div class="grid" id="grid"></div>
+      <div class="footer">Music_BG · cross-platform build · works on iPhone, Android & desktop</div>
+    </div>
+    <div id="stage" class="view"></div>
   </div>
-  <div id="hub" class="view active"><div class="grid" id="grid"></div>
-    <div class="footer">Music_BG · a cross-platform build of the Android app · works on iPhone, Android & desktop</div>
+
+  <div id="musicView" class="tabview">
+    <div class="topbar"><h1>Music <span class="sm">Play any track or a chill station</span></h1></div>
+    <div class="ytwrap" id="ytwrap"><iframe id="yt" src="https://www.youtube.com/embed/jfKfPfyJRdk?playsinline=1" allow="autoplay; encrypted-media" allowfullscreen title="player"></iframe></div>
+    <input class="input" id="ytInput" placeholder="Paste a YouTube link or video ID…" />
+    <button class="btn" id="ytGo">Play</button>
+    <div class="note">Stations</div>
+    <div id="stations"></div>
+    <div class="note">Playback uses YouTube's official embedded player, so it works on iPhone, Android and desktop. Full library streaming (search, downloads, background play) lives in the Android app.</div>
   </div>
-  <div id="stage" class="view"></div>
 </div>
+
+<nav id="tabs">
+  <button class="tab on" data-tab="play"><span class="ti">🎮</span>Play</button>
+  <button class="tab" data-tab="music"><span class="ti">♪</span>Music</button>
+</nav>
 <script src="app.js"></script>
 </body>
 </html>
