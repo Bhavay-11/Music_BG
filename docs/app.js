@@ -928,6 +928,8 @@
     musicView.classList.toggle("active", tab === "music");
     if (togetherView) togetherView.classList.toggle("active", tab === "together");
     const mv = document.getElementById("moviesView"); if (mv) mv.classList.toggle("active", tab === "movies");
+    // Leaving Movies: pause the film so it releases the audio session (else music can't play on mobile).
+    if (tab !== "movies") { const ov = document.querySelector("#ownWrap video"); if (ov) { try { ov.pause(); } catch (e) {} } }
   }));
 
   // ---------- music (YouTube embedded player) ----------
